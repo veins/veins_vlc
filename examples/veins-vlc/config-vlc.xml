@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+	<AnalogueModels>
+		<AnalogueModel type="EmpiricalLightModel">
+			<parameter name="headlightMaxTxRange" type="double" value="100"/>
+			<parameter name="taillightMaxTxRange" type="double" value="30"/>
+			<parameter name="headlightMaxTxAngle" type="double" value="45"/>
+			<parameter name="taillightMaxTxAngle" type="double" value="60"/>
+		</AnalogueModel>
+		
+		<AnalogueModel type="VehicleObstacleShadowing">
+			<parameter name="carrierFrequency" type="double" value="666e12"/>
+			<parameter name="enableVlc" type="bool" value="true"/>
+		</AnalogueModel>
+		<!--
+		<AnalogueModel type="SimpleObstacleShadowing">
+			<parameter name="carrierFrequency" type="double" value="666e12"/>
+			<obstacles>
+				<type id="building" db-per-cut="9999" db-per-meter="0.4" />
+			</obstacles>
+		</AnalogueModel>
+		-->
+	</AnalogueModels>
+	
+	<Decider type="DeciderVlc">
+		<!-- The center frequency on which the phy listens-->
+		<parameter name="centerFrequency" type="double" value="666e12"/>
+	</Decider>
+</root>

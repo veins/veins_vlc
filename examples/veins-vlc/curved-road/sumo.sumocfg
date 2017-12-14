@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.sf.net/xsd/sumoConfiguration.xsd">
+
+	<input>
+		<net-file value="net.net.xml"/>
+		<route-files value="rou.rou.xml"/>
+	</input>
+
+	<time>
+		<begin value="0"/>
+		<!-- <end value="500"/> -->	<!-- if not specified will end the simulation prematurely if there is no car scheduled to be added -->
+		<step-length value="0.01"/>	<!-- high time-step to avoid sumo rounding errors -->
+	</time>
+
+	<gui_only>
+	    <gui-settings-file value="gui-settings.xml"/>
+	    <start value="true"/>
+	    <quit-on-end value="true"/>
+	</gui_only>
+
+</configuration>
