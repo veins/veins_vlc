@@ -26,8 +26,8 @@ import org.car2x.veins.modules.obstacle.ObstacleControl;
 import org.car2x.veins.modules.world.annotations.AnnotationManager;
 import org.car2x.veins.modules.world.annotations.AnnotationManager;
 import org.car2x.veins.modules.vlc.CarVlcMobility;
-import org.car2x.veins.modules.utility.packetMonitor.PacketMonitor;
 import org.car2x.veins.modules.vlc.VlcConnectionManager;
+//import org.car2x.veins.modules.utility.packetMonitor.PacketMonitor;
 
 import org.car2x.veins.modules.mobility.traci.TraCIScreenRecorder;
 
@@ -73,7 +73,7 @@ module Highway
                 @display("p=34,206");
         }
         
-//        schreenshotter: TraCIScreenRecorder {
+//        screenRecorder: TraCIScreenRecorder {
 //            parameters:
 //                @display("p=34,413");
 //        }

@@ -409,6 +409,7 @@ void PhyLayerVlc::handleSelfMessage(cMessage* msg) {
 	//transmission overBasePhyLayer::
 	case TX_OVER: {
 		assert(msg == txOverTimer);
+		//TODO: Need a mechanism to inform the upper layers that the txOverTimer arrived
 		break;
 	}
 	//radio switch over
