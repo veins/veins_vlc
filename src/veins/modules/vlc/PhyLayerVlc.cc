@@ -32,7 +32,6 @@
 #include "veins/modules/analogueModel/SimpleObstacleShadowing.h"
 #include "veins/modules/analogueModel/VehicleObstacleShadowing.h"
 #include "veins/base/connectionManager/BaseConnectionManager.h"
-#include "veins/modules/utility/Consts80211p.h"
 #include "veins/modules/messages/AirFrame11p_m.h"
 
 using Veins::ObstacleControlAccess;
@@ -42,6 +41,7 @@ Define_Module(PhyLayerVlc);
 void PhyLayerVlc::initialize(int stage) {
 	if (stage == 0) {
 		debug = par("debug").boolValue();
+		deciderDebug = par("deciderDebug").boolValue();
 
 		power = par("txPower").doubleValue();
         if(power != FIXED_REFERENCE_POWER_MW)
@@ -52,14 +52,14 @@ void PhyLayerVlc::initialize(int stage) {
         direction = getParentModule()->par("direction").stringValue();
         collectCollisionStatistics = par("collectCollisionStatistics").boolValue();
 
-        VLCDEBUG("[READING CONFIG XML PARAMETERS]"
-                << "\nPower: " << power
-                << "\nBitrate: " << bitrate
-                << "\nBandwidth: " << bandwidth
-                << "\nFrequency: " << frequency
-                << "\nDirection: " << direction
-                << "\nCollectCollisionStatistics: " << collectCollisionStatistics
-                )
+//        VLCDEBUG("[READING CONFIG XML PARAMETERS]"
+//                << "\nPower: " << power
+//                << "\nBitrate: " << bitrate
+//                << "\nBandwidth: " << bandwidth
+//                << "\nFrequency: " << frequency
+//                << "\nDirection: " << direction
+//                << "\nCollectCollisionStatistics: " << collectCollisionStatistics
+//                )
 	}
 	BasePhyLayer::initialize(stage);
 	if (stage == 0) {
@@ -84,16 +84,26 @@ AnalogueModel* PhyLayerVlc::getAnalogueModelFromName(std::string name, Parameter
 }
 
 AnalogueModel* PhyLayerVlc::initializeEmpiricalLightModel(ParameterMap& params) {
+
+    bool debug;
     double headlightMaxTxRange = 0.0, taillightMaxTxRange = 0.0, headlightMaxTxAngle = 0.0, taillightMaxTxAngle = 0.0;
     ParameterMap::iterator it;
 
-    it = params.find("headlightMaxTxRange");
+    it = params.find("debug");
     // check if parameter specified in config.xml
+    if ( it != params.end() ){
+        debug = it->second.boolValue();
+    }
+    else{
+        error("`debug` has not been specified in config-vlc.xml");
+    }
+
+    it = params.find("headlightMaxTxRange");
     if ( it != params.end() ){
         headlightMaxTxRange = it->second.doubleValue();
     }
     else{
-        error("headlightMaxTxRange has not been specified in config-vlc.xml");
+        error("`headlightMaxTxRange` has not been specified in config-vlc.xml");
     }
 
     it = params.find("taillightMaxTxRange");
@@ -101,7 +111,7 @@ AnalogueModel* PhyLayerVlc::initializeEmpiricalLightModel(ParameterMap& params) 
         taillightMaxTxRange = it->second.doubleValue();
     }
     else{
-        error("taillightMaxTxRange has not been specified in config-vlc.xml");
+        error("`taillightMaxTxRange` has not been specified in config-vlc.xml");
     }
 
     it = params.find("headlightMaxTxAngle");
@@ -109,7 +119,7 @@ AnalogueModel* PhyLayerVlc::initializeEmpiricalLightModel(ParameterMap& params) 
         headlightMaxTxAngle = it->second.doubleValue();
     }
     else{
-        error("headlightMaxTxAngle has not been specified in config-vlc.xml");
+        error("`headlightMaxTxAngle` has not been specified in config-vlc.xml");
     }
 
     it = params.find("taillightMaxTxAngle");
@@ -117,18 +127,18 @@ AnalogueModel* PhyLayerVlc::initializeEmpiricalLightModel(ParameterMap& params) 
         taillightMaxTxAngle = it->second.doubleValue();
     }
     else{
-        error("taillightMaxTxAngle has not been specified in config-vlc.xml");
+        error("`taillightMaxTxAngle` has not been specified in config-vlc.xml");
     }
 
-    VLCDEBUG("[READING ANALOG MODEL PARAMETERS]"
-            << "headlightMaxTxRange: " << headlightMaxTxRange
-            << "taillightMaxTxRange: " << taillightMaxTxRange
-            << "headlightMaxTxAngle: " << headlightMaxTxAngle
-            << "taillightMaxTxAngle: " << taillightMaxTxAngle
-            )
+//    VLCDEBUG("[READING ANALOG MODEL PARAMETERS]"
+//            << "headlightMaxTxRange: " << headlightMaxTxRange
+//            << "taillightMaxTxRange: " << taillightMaxTxRange
+//            << "headlightMaxTxAngle: " << headlightMaxTxAngle
+//            << "taillightMaxTxAngle: " << taillightMaxTxAngle
+//            )
 
     // BasePhyLayer converts sensitivity from config.xml to mW @ line 72. Convert it back to dBm
-    return new EmpiricalLightModel(FWMath::mW2dBm(sensitivity), headlightMaxTxRange, taillightMaxTxRange, headlightMaxTxAngle, taillightMaxTxAngle);
+    return new EmpiricalLightModel(debug, FWMath::mW2dBm(sensitivity), headlightMaxTxRange, taillightMaxTxRange, headlightMaxTxAngle, taillightMaxTxAngle);
 }
 
 Decider* PhyLayerVlc::getDeciderFromName(std::string name, ParameterMap& params) {
@@ -240,8 +250,7 @@ AnalogueModel* PhyLayerVlc::initializeVehicleObstacleShadowing(ParameterMap& par
 Decider* PhyLayerVlc::initializeDeciderVlc(ParameterMap& params) {
   double centerFreq = params["centerFrequency"];
   ASSERT2(centerFreq == frequency, "`frequency` in omnetpp.ini is not the same with `centerFrequency` from `config.xml`");
-  DeciderVlc* dec = new DeciderVlc(this, sensitivity, centerFreq, bandwidth, bitrate, direction, findHost()->getIndex(), collectCollisionStatistics, coreDebug);
-  dec->setPath(getParentModule()->getFullPath());
+  DeciderVlc* dec = new DeciderVlc(this, sensitivity, centerFreq, bandwidth, bitrate, direction, findHost()->getIndex(), coreDebug, collectCollisionStatistics, deciderDebug);
   return dec;
 }
 
@@ -301,7 +310,7 @@ AirFrame *PhyLayerVlc::encapsMsg(cPacket *macPkt)
 {
     // Similar to createSignal() & attachSignal() of the Mac1609_4
     int headerLength = PHY_VLC_HEADER;      // length of the phy header (preamble w/o signal), used later when constructing phy frame
-    setParametersForBitrate(bitrate);
+//    setParametersForBitrate(bitrate);
     //macPkt->addBitLength(PHY_VLC_MHR);    // Not modeling the MAC frame size; MHR is part of PSDU according to standard so we assume the whole macPkt contains it
 
     // From Mac1609_4::attachSignal()
@@ -364,29 +373,12 @@ AirFrame *PhyLayerVlc::encapsMsg(cPacket *macPkt)
     return frame;
 }
 
-simtime_t PhyLayerVlc::getFrameDuration(int payloadLengthBits, enum PHY_MCS mcs) const {
-    //FIXME: This needs to be fixed: the header part is from VLC, the rest from IEEE 802.11!
-    simtime_t duration;
-    if (mcs == MCS_DEFAULT) {
-        // calculate frame duration according to Equation (17-29) of the IEEE 802.11-2007 standard
-        duration = (PHY_VLC_SHR + PHY_VLC_HEADER)/bitrate + T_SYM_80211P * ceil( (16 + payloadLengthBits + 6)/(n_dbps) );
-    }
-    else {
-        uint32_t ndbps = getNDBPS(mcs);
-        duration = (PHY_VLC_SHR + PHY_VLC_HEADER)/bitrate + T_SYM_80211P * ceil( (16 + payloadLengthBits + 6)/(ndbps) );
-    }
-
+simtime_t PhyLayerVlc::getFrameDuration(int payloadLengthBits) const {
+    // Following assumptions apply:
+    // i) The SHR and the HEADER are sent with the same bitrate as the payload
+    // ii) Due to OOK, the number of bits per symbol (n_nbps) == 1, so the payload is not divided
+    simtime_t duration = (PHY_VLC_SHR + PHY_VLC_HEADER)/bitrate + payloadLengthBits/bitrate;
     return duration;
-}
-
-void PhyLayerVlc::setParametersForBitrate(uint64_t bitrate) {
-    for (unsigned int i = 0; i < NUM_BITRATES_80211P; i++) {
-        if (bitrate == BITRATES_80211P[i]) {
-            n_dbps = N_DBPS_80211P[i];
-            return;
-        }
-    }
-    error("Chosen Bitrate is not valid; Valid rates are: 3Mbps, 4.5Mbps, 6Mbps, 9Mbps, 12Mbps, 18Mbps, 24Mbps and 27Mbps. Please adjust your omnetpp.ini file accordingly");
 }
 
 int PhyLayerVlc::setDirection(const std::string& direction) {

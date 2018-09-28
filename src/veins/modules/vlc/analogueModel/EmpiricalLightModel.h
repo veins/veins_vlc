@@ -35,7 +35,7 @@ using Veins::TraCIMobility;
 using Veins::AnnotationManager;
 using Veins::AnnotationManagerAccess;
 
-#define ELMDEBUG(word) if(debug) {std::cout << "\tELM: " << word << std::endl;}
+#define ELMDEBUG(word) if(debug) {std::cout << "\t\tELM: " << word << std::endl;}
 
 /**
  * @brief This class returns the received power on the
@@ -49,7 +49,7 @@ class MIXIM_API EmpiricalLightModel : public AnalogueModel {
 protected:
     AnnotationManager* annotations;
 
-    bool debug = false;
+    bool debug;
     double sensitivity_dbm;
     double headlightMaxTxRange;
     double taillightMaxTxRange;
@@ -57,7 +57,8 @@ protected:
     double taillightMaxTxAngle;
 
 public:
-	EmpiricalLightModel(double rxSensitivity_dbm, double m_headlightMaxTxRange, double m_taillightMaxTxRange, double m_headlightMaxTxAngle, double m_taillightMaxTxAngle):
+	EmpiricalLightModel(bool debug, double rxSensitivity_dbm, double m_headlightMaxTxRange, double m_taillightMaxTxRange, double m_headlightMaxTxAngle, double m_taillightMaxTxAngle):
+	    debug(debug),
 	    sensitivity_dbm(rxSensitivity_dbm),
 	    headlightMaxTxRange(m_headlightMaxTxRange),
 	    taillightMaxTxRange(m_taillightMaxTxRange),
@@ -68,13 +69,12 @@ public:
         headlightMaxTxAngle = deg2rad(headlightMaxTxAngle);
         taillightMaxTxAngle = deg2rad(taillightMaxTxAngle);
 
-        ELMDEBUG("\tEmpiricalLightModel()"
-                << "\n\trxSensitivity_dbm: " << sensitivity_dbm
-                << "\n\theadlightMaxTxRange: " << headlightMaxTxRange
-                << "\n\ttaillightMaxTxRange: " << taillightMaxTxRange
-                << "\n\theadlightMaxTxAngle: " << headlightMaxTxAngle
-                << "\n\ttaillightMaxTxAngle: " << taillightMaxTxAngle
-                )
+        ELMDEBUG("\tEmpiricalLightModel() constructor called...")
+        ELMDEBUG("\trxSensitivity_dbm: " << sensitivity_dbm);
+        ELMDEBUG("\theadlightMaxTxRange: " << headlightMaxTxRange);
+        ELMDEBUG("\ttaillightMaxTxRange: " << taillightMaxTxRange);
+        ELMDEBUG("\theadlightMaxTxAngle: " << headlightMaxTxAngle);
+        ELMDEBUG("\ttaillightMaxTxAngle: " << taillightMaxTxAngle);
 
         annotations = AnnotationManagerAccess().getIfExists();
         ASSERT(annotations);

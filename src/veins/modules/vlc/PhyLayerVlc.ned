@@ -28,7 +28,8 @@ simple PhyLayerVlc extends BasePhyLayer
         //enabling this feature increases simulation time
         bool collectCollisionStatistics = default(false);
         
-        bool debug;
+        bool debug; // for the vlc phy
+        bool deciderDebug;	// for the vlc decider
         double txPower @unit(mW);
         double bitrate @unit(bps);
         double centerFrequency @unit(Hz);

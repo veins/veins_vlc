@@ -43,3 +43,8 @@ double utilTrunc(double number);
 
 // Based on close() from FWMath.h
 bool close(double one, double two);
+
+// Return BER of OOK at the given SNR.
+double getOokBer (double snr);
+
+double getOokPdr (double snr, int packetLength);

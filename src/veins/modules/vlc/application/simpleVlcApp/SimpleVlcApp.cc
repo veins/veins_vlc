@@ -64,7 +64,7 @@ void SimpleVlcApp::handleMessage(cMessage *msg){
             }
             case VLC:
             {
-                VOUT("VLC message received!")
+                VOUT("VLC message received from: " << vlcMsg->getSourceNode())
                 delete vlcMsg;
                 break;
             }

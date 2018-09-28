@@ -26,31 +26,6 @@ NistErrorRate::NistErrorRate ()
 }
 
 double
-NistErrorRate::getOokBer (double snr)
-{
-    // assuming Q-func(sqrt(snr))
-    double z = std::sqrt (snr / 2.0);
-    double ber = 0.5 * erfc (z);
-    return ber;
-
-    // If BER is zero we can receive, else not.
-//    if (ber == 0.0)
-//        return 1.0;
-//    else
-//        return 0.0;
-}
-double
-NistErrorRate::getOokPer (double snr, int packetLength)
-{
-    double ber = getOokBer (snr);
-    if (ber == 0.0)
-        {
-            return 1.0;
-        }
-    double pms = std::pow (1 - ber, (double)packetLength);
-    return pms;
-}
-double
 NistErrorRate::getBpskBer (double snr)
 {
 	double z = std::sqrt (snr);

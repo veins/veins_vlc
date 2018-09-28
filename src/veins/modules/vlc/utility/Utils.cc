@@ -79,3 +79,27 @@ double utilTrunc(double number){
 bool close(double one, double two){
     return fabs(one-two)<0.0000001;
 }
+
+double getOokBer(double snr){
+    // Modelling OOK based on BPSK of NistErrorRate;
+    // Assuming Q-func(sqrt(snr))
+    double z = std::sqrt (snr / 2.0);
+    double ber = 0.5 * erfc (z);
+    return ber;
+
+    // If BER is zero we can receive, else not.
+//    if (ber == 0.0)
+//        return 1.0;
+//    else
+//        return 0.0;
+}
+
+double getOokPdr(double snr, int packetLength){
+    double ber = getOokBer (snr);
+
+    if (ber == 0.0){
+        return 1.0;
+    }
+
+    return std::pow (1 - ber, (double)packetLength);
+}

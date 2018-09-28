@@ -32,7 +32,7 @@
 using Veins::AirFrame;
 using Veins::TraCIMobility;
 
-#define DECIDER_VLC_DBG(word) if(debug) {std::cout << "\tDECIDER_VLC: " << word << std::endl;}
+#define DECIDER_VLC_DBG(word) if(debug) {std::cout << "\tModule: [" << myPhy << ".decider" <<"]: " << word << std::endl;}
 
 class AirFrameVlc;
 
@@ -41,6 +41,7 @@ class DeciderVlc: public BaseDecider {
         enum PACKET_OK_RESULT {DECODED, NOT_DECODED, COLLISION};
 
     protected:
+        bool debug;
         double centerFrequency;
         double bandwidth;
         double bitrate;
@@ -48,12 +49,10 @@ class DeciderVlc: public BaseDecider {
 
         double myBusyTime;
         double myStartTime;
-
-        std::string myPath;
+        std::string myPhy;
         std::map<AirFrame*,int> signalStates;
         bool collectCollisionStats;
         unsigned int collisions;
-        bool debug = false;
 
     protected:
         DeciderResult* checkIfSignalOk(AirFrame* frame);
@@ -69,25 +68,25 @@ class DeciderVlc: public BaseDecider {
                       double centerFrequency,
                       double bw,
                       double bRate,
-                      std::string lightDir,
+                      const std::string lightDir,
                       int myIndex = -1,
+                      bool coreDebug = false,
                       bool collectCollisionStatistics = false,
                       bool debug = false):
-            BaseDecider(phy, sensitivity, myIndex, debug),
+            BaseDecider(phy, sensitivity, myIndex, coreDebug),
             centerFrequency(centerFrequency),
             bandwidth(bw),
             bitrate(bRate),
             direction(lightDir),
             collectCollisionStats(collectCollisionStatistics),
+            debug(debug),
             myBusyTime(0),
             myStartTime(simTime().dbl())
             {
-                DECIDER_VLC_DBG("DeciderVLC initialization called!")
+                DECIDER_VLC_DBG("DeciderVLC constructor called!");
+                cModule *mod = check_and_cast<cModule *>(phy);
+                myPhy = mod->getFullPath();
             }
-
-        void setPath(std::string myPath) {
-            this->myPath = myPath;
-        }
 
         int getSignalState(AirFrame* frame);
         virtual ~DeciderVlc();

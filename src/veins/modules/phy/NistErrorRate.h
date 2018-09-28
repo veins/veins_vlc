@@ -35,12 +35,6 @@ public:
 	NistErrorRate ();
 
 	static double getChunkSuccessRate (unsigned int datarate, enum Bandwidth bw, double snr_mW, uint32_t nbits);
-    /**
-     * Return BER of OOK at the given SNR.
-     * Modelling OOK based on BPSK
-     */
-    static double getOokBer (double snr);
-    static double getOokPer (double snr, int packetLength);
 
 private:
 	/**

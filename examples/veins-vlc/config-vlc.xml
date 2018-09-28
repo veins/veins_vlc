@@ -2,6 +2,7 @@
 <root>
 	<AnalogueModels>
 		<AnalogueModel type="EmpiricalLightModel">
+			<parameter name="debug" type="bool" value="false"/>
 			<parameter name="headlightMaxTxRange" type="double" value="100"/>
 			<parameter name="taillightMaxTxRange" type="double" value="30"/>
 			<parameter name="headlightMaxTxAngle" type="double" value="45"/>

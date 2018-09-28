@@ -56,7 +56,7 @@ class PhyLayerVlc   :   public BasePhyLayer
         double frequency;
         double power;
         bool debug;
-        double n_dbps;
+        bool deciderDebug;
         std::string direction;
 
         virtual void handleMessage(cMessage* msg);
@@ -106,8 +106,7 @@ class PhyLayerVlc   :   public BasePhyLayer
          * AirFrame and sets all necessary attributes.
          */
         virtual AirFrame *encapsMsg(cPacket *msg);
-        simtime_t getFrameDuration(int payloadLengthBits, enum PHY_MCS mcs = MCS_DEFAULT) const;
-        void setParametersForBitrate(uint64_t bitrate);
+        simtime_t getFrameDuration(int payloadLengthBits) const;
 
 };
 

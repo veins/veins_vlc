@@ -23,11 +23,9 @@
 
 #include "veins/modules/vlc/DeciderVlc.h"
 #include "veins/modules/phy/DeciderResult80211.h"
-#include "veins/modules/messages/Mac80211Pkt_m.h"
 #include "veins/base/phyLayer/Signal_.h"
 #include "veins/modules/messages/AirFrame11p_m.h"
 #include "veins/modules/vlc/messages/AirFrameVlc_m.h"
-#include "veins/modules/phy/NistErrorRate.h"
 #include "veins/modules/utility/ConstsPhy.h"
 #include "veins/modules/utility/Consts80211p.h"
 #include "veins/base/utils/FWMath.h"
@@ -51,18 +49,18 @@ simtime_t DeciderVlc::processNewSignal(AirFrame* msg) {
     double recvPower = signal.getReceivingPower()->getValue(start);
     double recvPower_dbm = FWMath::mW2dBm(recvPower);
 
-    DECIDER_VLC_DBG("\tReceived power: " << recvPower
+    DECIDER_VLC_DBG("Received power: " << recvPower
             << "\tReceived power (dbm): " << recvPower_dbm)
 
     if (recvPower < sensitivity) {
-        DECIDER_VLC_DBG("\tReceived power below sensitivity! Do not receive again.")
+        DECIDER_VLC_DBG("Received power below sensitivity! Do not receive again.")
         frame->setUnderVlcSensitivity(true);
-        return notAgain;
+        return signal.getReceptionEnd();
     }
     else {
         setChannelIdleStatus(false);
 
-        DECIDER_VLC_DBG("\tAirFrame: " << frame->getId() << " with [rxPower vs. sens]: (" << recvPower << " > " << sensitivity << ") -> Trying to receive AirFrame."
+        DECIDER_VLC_DBG("AirFrame: " << frame->getId() << " with [rxPower vs. sens]: (" << recvPower << " > " << sensitivity << ") -> Trying to receive AirFrame."
                 << "\n\tNext handle time at the end of the signal @: "<< signal.getReceptionEnd() << " in: " << signal.getReceptionEnd() - simTime() )
 
         myBusyTime += signal.getDuration().dbl();
@@ -70,7 +68,7 @@ simtime_t DeciderVlc::processNewSignal(AirFrame* msg) {
         if (!currentSignal.first) {
             //NIC is not yet synced to any frame, so sync to this one and try to decode it
             currentSignal.first = frame;
-            DECIDER_VLC_DBG("\tSynced to AirFrame: " << frame->getId())
+            DECIDER_VLC_DBG("Synced to AirFrame: " << frame->getId())
         }
         else {
             //NIC is currently trying to decode another frame. this frame will be simply treated as interference
@@ -249,10 +247,10 @@ DeciderResult* DeciderVlc::checkIfSignalOk(AirFrame* frame) {
 
 enum DeciderVlc::PACKET_OK_RESULT DeciderVlc::packetOk(double snirMin, double snrMin, int lengthMPDU, double bitrate, AirFrameVlc* frame) {
     //compute success rate depending on mcs and bw
-    double packetOkSinr = NistErrorRate::getOokPer(snirMin, lengthMPDU);    // PER w/o FEC
+    double packetOkSinr = getOokPdr(snirMin, lengthMPDU);    // PDR w/o FEC
 
     //check if header is broken
-    double headerOkSinr = NistErrorRate::getOokPer(snirMin, PHY_VLC_SHR);
+    double headerOkSinr = getOokPdr(snirMin, PHY_VLC_SHR);
 
     double packetOkSnr;
     double headerOkSnr;
@@ -260,15 +258,15 @@ enum DeciderVlc::PACKET_OK_RESULT DeciderVlc::packetOk(double snirMin, double sn
     //compute PER also for SNR only
     if (collectCollisionStats) {
 
-        packetOkSnr = NistErrorRate::getOokPer(snrMin, lengthMPDU);
+        packetOkSnr = getOokPdr(snrMin, lengthMPDU);
 
-        headerOkSnr = NistErrorRate::getOokPer(snrMin, PHY_VLC_SHR);
+        headerOkSnr = getOokPdr(snrMin, PHY_VLC_SHR);
 
         //the probability of correct reception without considering the interference
         //MUST be greater or equal than when consider it
 
         ASSERT( close(packetOkSnr, packetOkSinr) || (packetOkSnr > packetOkSinr) );
-        ASSERT( close(headerOkSnr, headerOkSinr) || (headerOkSnr  > headerOkSinr) );
+        ASSERT( close(headerOkSnr, headerOkSinr) || (headerOkSnr > headerOkSinr) );
     }
 
     //probability of no bit error in the PLCP header
@@ -342,8 +340,6 @@ simtime_t DeciderVlc::processSignalEnd(AirFrame* msg) {
     start.setTime(signal.getReceptionStart());
     start.setArgValue(Dimension::frequency(), centerFrequency);
 
-    double recvPower_dBm = 10*log10(signal.getReceivingPower()->getValue(start));
-
     // Forget the state information about this frame
     signalStates.erase(frame);
 
@@ -382,8 +378,6 @@ simtime_t DeciderVlc::processSignalEnd(AirFrame* msg) {
 
     return notAgain;
 }
-
-
 
 void DeciderVlc::finish() {
 }

@@ -24,7 +24,8 @@
 
 using Veins::AirFrame;
 
-// y=100m  x=-50m ~ +50m  //TODO: Use consts instead of hard-coded values
+// y=100m  x=-50m ~ +50m; PD height = 0.55 m
+//TODO: Use consts instead of hard-coded values
 static const double ccHeadModel[100][101] =    // value given in dbm
         { { -116.99, -116.99, -116.99, -116.99, -116.99, -116.99, -116.99,
                 -116.99, -116.99, -116.99, -116.99, -116.99, -116.99, -116.99,
@@ -1720,7 +1721,8 @@ static const double ccHeadModel[100][101] =    // value given in dbm
                         -99.69, -100.29, -100.81, -101.32, -101.83, -116.99,
                         -116.99, -116.99, -116.99, -116.99 } };
 
-// y=30m  x=-20m ~ +20m   //TODO: Use consts instead of hard-coded values
+// y=30m  x=-20m ~ +20m; PD height = 0.7 m
+//TODO: Use consts instead of hard-coded values
 static const double ccTailModel[30][41] = { { -116.99, -116.99, -116.99, -116.99, -116.99,
         -116.99, -116.99, -116.99, -116.99, -116.99, -116.99, -116.99, -116.99,
         -116.99, -116.99, -116.99, -116.99, -116.99, -116.99, -72.385, -60.657,
@@ -1902,16 +1904,15 @@ static const double ccTailModel[30][41] = { { -116.99, -116.99, -116.99, -116.99
                 -116.99, -116.99, -116.99, -116.99, -116.99 } };
 
 void EmpiricalLightModel::filterSignal(AirFrame *frame, const Coord& sendersPos, const Coord& receiverPos) {
-    Signal&   signal = frame->getSignal();
+    Signal& signal = frame->getSignal();
 
 	cModule* sender = frame->getSenderModule();
 	cModule* receiver = frame->getArrivalModule();
 
-	ELMDEBUG("\tsender: " << sender->getFullPath()
-	        << "\treceiver: " << receiver->getFullPath()
-	        << "\n\tsenderPos: " << sendersPos.info()
-	        << "\treceiverPos: " << receiverPos.info()
-	        )
+	ELMDEBUG("\tsender: " << sender->getFullPath())
+    ELMDEBUG("\treceiver: " << receiver->getFullPath())
+    ELMDEBUG("\tsenderPos: " << sendersPos.info())
+    ELMDEBUG("\treceiverPos: " << receiverPos.info())
 
 	// Navigate two levels up (i.e., in Car level) and find veinsmobility
 	cModule* tmp_senderVeinsMobility = sender->getModuleByPath("^.^.veinsmobility");
@@ -1926,7 +1927,7 @@ void EmpiricalLightModel::filterSignal(AirFrame *frame, const Coord& sendersPos,
     double txHeading = traci2omnetAngle2(senderVeinsMobility->getAngleRad());
     double rxHeading = traci2omnetAngle2(receiverVeinsMobility->getAngleRad());
 
-    ELMDEBUG("txHeading: " << txHeading
+    ELMDEBUG("\ttxHeading: " << txHeading
             << "\trxHeading: " << rxHeading
             << "\ntxHeading (deg): " << rad2deg(txHeading)
             << "\trxHeading (deg): " << rad2deg(rxHeading)
@@ -1998,13 +1999,13 @@ void EmpiricalLightModel::filterSignal(AirFrame *frame, const Coord& sendersPos,
             ELMDEBUG("\tWithin bearing")
 
             if(inTxFov && inTxBearing){
-                ELMDEBUG("Message can be received: Angle & Bearing are OK")
+                ELMDEBUG("\tMessage can be received: Angle & Bearing are OK")
                 if(inTxRange){
-                    ELMDEBUG("Within range of the measurement, receiving via Empirical Model")
+                    ELMDEBUG("\tWithin range of the measurement, receiving via Empirical Model")
                     receivedPower_dbm = calcReceivedPower(txOrientation, tx2RxDistance, tx2RxVector, txHeadingVector, rxHeadingVector);
                 }
                 else{
-                    ELMDEBUG("Beyond the range of the measurements, receiving via Fitted Empirical Model")
+                    ELMDEBUG("\tBeyond the range of the measurements, receiving via Fitted Empirical Model")
                     receivedPower_dbm = calcFittedReceivedPower(tx2RxDistance, tx2RxVector, txHeadingVector);
                 }
             }
@@ -2012,7 +2013,7 @@ void EmpiricalLightModel::filterSignal(AirFrame *frame, const Coord& sendersPos,
         }
         case TAIL:
         {
-            ELMDEBUG("Sender: TailLight")
+            ELMDEBUG("\tSender: TailLight")
             bool inTxRange = tx2RxDistance <= taillightMaxTxRange;
             bool inTxFov = ((receiverPos - sendersPos)/cos(headlightMaxTxAngle))*txHeadingVector >= tx2RxDistance;
             bool inTxBearing = cosIncidenceAngle < 0;
@@ -2036,7 +2037,7 @@ void EmpiricalLightModel::filterSignal(AirFrame *frame, const Coord& sendersPos,
             ELMDEBUG("\tWithin bearing")
 
             if(inTxRange && inTxFov && inTxBearing)
-                ELMDEBUG("Message can be received!")
+                ELMDEBUG("\tMessage can be received!")
 
             receivedPower_dbm = calcReceivedPower(txOrientation, tx2RxDistance, tx2RxVector, txHeadingVector, rxHeadingVector);
             break;
@@ -2065,7 +2066,7 @@ void EmpiricalLightModel::filterSignal(AirFrame *frame, const Coord& sendersPos,
     }
 
     ELMDEBUG("\tattenuationFactor_linear: " << attenuationFactor
-            << "\n\tattenuationFactor_db: " << attenuationFactor_db
+            << "\tattenuationFactor_db: " << attenuationFactor_db
             )
 
     TimeMapping<Linear>* attMapping = new TimeMapping<Linear> ();
