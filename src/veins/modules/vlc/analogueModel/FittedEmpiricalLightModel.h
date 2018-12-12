@@ -16,9 +16,13 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
+#pragma once
+
 #include <omnetpp.h>
 #include <math.h>
 #include "veins/base/utils/Coord.h"
+
+namespace Veins {
 
 /**
  * @brief This class calculates the received power based on
@@ -40,4 +44,6 @@ double getPowerAngle_dbm(double angle, double period, double delta, double epsil
 
 double getTotalPower_dbm(double distance, double angle, double alpha, double beta, double gamma, double period, double delta, double epsilon);
 
-double getTotalPowerCoord_dbm(Coord sendersPos, Coord receiverPos, double alpha, double beta, double gamma, double period, double delta, double epsilon);
+double getTotalPowerCoord_dbm(Coord senderPos, Coord receiverPos, double alpha, double beta, double gamma, double period, double delta, double epsilon);
+
+} // namespace Veins

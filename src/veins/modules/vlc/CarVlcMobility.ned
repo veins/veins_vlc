@@ -22,14 +22,16 @@
 package org.car2x.veins.modules.vlc;
 
 import org.car2x.veins.modules.vlc.CarVlc;
+import org.car2x.veins.base.modules.BaseMobility;
+
 
 module CarVlcMobility extends CarVlc
 {
     parameters:
-        string mobilityType;
+		string mobilityType = default("org.car2x.veins.base.modules.BaseMobility"); //type of the mobility module
         double zombieAngleDeg = default(-1);
     submodules:
-        mobility: <mobilityType> like org.car2x.veins.base.modules.IMobility {
+        foreignMobility: <mobilityType> like org.car2x.veins.base.modules.IMobility {
             parameters:
                 @display("p=368,194;i=block/cogwheel");
         }

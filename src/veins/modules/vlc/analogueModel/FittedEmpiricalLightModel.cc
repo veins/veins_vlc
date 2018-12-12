@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2006-2017 Agon Memedi <memedi@ccs-labs.org>
+// Copyright (C) 2017-2017 Agon Memedi <memedi@ccs-labs.org>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,21 +18,31 @@
 
 #include "veins/modules/vlc/analogueModel/FittedEmpiricalLightModel.h"
 
-double getPowerDistance_dbm(double distance, double alpha, double beta, double gamma){
-    return alpha + 10*beta*log10(1/(distance + gamma));
+using namespace Veins;
+
+namespace Veins {
+
+double getPowerDistance_dbm(double distance, double alpha, double beta, double gamma)
+{
+    return alpha + 10 * beta * log10(1 / (distance + gamma));
 }
 
-double getPowerAngle_dbm(double angle, double period, double delta, double epsilon){
-    return delta + epsilon*cos(2*M_PI*angle/period);
+double getPowerAngle_dbm(double angle, double period, double delta, double epsilon)
+{
+    return delta + epsilon * cos(2 * M_PI * angle / period);
 }
 
-double getTotalPower_dbm(double distance, double angle, double alpha, double beta, double gamma, double period, double delta, double epsilon){
-  return getPowerDistance_dbm(distance, alpha, beta, gamma) + getPowerAngle_dbm(angle, period, delta, epsilon);
+double getTotalPower_dbm(double distance, double angle, double alpha, double beta, double gamma, double period, double delta, double epsilon)
+{
+    return getPowerDistance_dbm(distance, alpha, beta, gamma) + getPowerAngle_dbm(angle, period, delta, epsilon);
 }
 
-double getTotalPowerCoord_dbm(Coord sendersPos, Coord receiverPos, double alpha, double beta, double gamma, double period, double delta, double epsilon){
-    double distance = sendersPos.distance(receiverPos);
-    double angle = (atan2(receiverPos.x - sendersPos.x, receiverPos.y - sendersPos.y)*180/M_PI)+90;
+double getTotalPowerCoord_dbm(Coord senderPos, Coord receiverPos, double alpha, double beta, double gamma, double period, double delta, double epsilon)
+{
+    double distance = senderPos.distance(receiverPos);
+    double angle = (atan2(receiverPos.x - senderPos.x, receiverPos.y - senderPos.y) * 180 / M_PI) + 90;
     // Here from the angle we cannot tell on which side of the Tx, the Rx is located, don't use this function!
     return getTotalPower_dbm(distance, angle, alpha, beta, gamma, period, delta, epsilon);
 }
+
+} // namespace Veins

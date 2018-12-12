@@ -28,14 +28,14 @@ import org.car2x.veins.base.modules.BaseMacLayer;
 // @author Christopher Saloman
 // @author David Eckhoff : rewrote complete model
 //
-// @see BaseWaveApplLayer
+// @see DemoBaseApplLayer
 // @see Nic80211p
 // @see PhyLayer80211p
 //
 simple Mac1609_4 extends BaseMacLayer
 {
     parameters:
-        @class(Mac1609_4);
+        @class(Veins::Mac1609_4);
 
         // cycle between an SCH and the CCH (or stay on CCH all the time)
         bool useServiceChannel = default(true);
@@ -43,14 +43,11 @@ simple Mac1609_4 extends BaseMacLayer
         // the service channel this maclayer listens on when started
         int serviceChannel = default(1);
 
-        // debug switch
-        bool debug = default(false);
-
         // length of MAC header, header is already added at 1609_4
         headerLength @unit(bit) = default(0 bit);
 
-        // bit rate 
-        double bitrate @unit(bps) = default(6 Mbps);
+        // bit rate
+        int bitrate @unit(bps) = default(6 Mbps);
 
         // maximum artificial asynchronization between cars to avoid synchronization effects
         double syncOffset @unit(s) = default(0.0003s);
@@ -61,9 +58,17 @@ simple Mac1609_4 extends BaseMacLayer
         //the maximum queue size of an EDCA queue in the MAC. 0 for unlimited. Queue strategy is "drop if full"
         int queueSize = default(0);
 
+        // unicast parameters
+        int dot11RTSThreshold @unit(bit) = default(12000bit);
+        int dot11ShortRetryLimit = default(7);
+        int dot11LongRetryLimit = default(4);
+        int ackLength @unit(bit) = default(112bit);
+        bool useAcks = default(false);
+        double ackErrorRate = default(0.20);
+
         // signal informing interested application about channel busy state
-        @signal[sigChannelBusy](type=bool);
+        @signal[org.car2x.veins.modules.mac.sigChannelBusy](type=bool);
         // signal informing interested application about a collision
-        @signal[sigCollision](type=bool);
+        @signal[org.car2x.veins.modules.mac.sigCollision](type=bool);
 
 }

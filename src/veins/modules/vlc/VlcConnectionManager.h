@@ -16,11 +16,13 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef VLCCONNECTIONMANAGER_H_
-#define VLCCONNECTIONMANAGER_H_
+#pragma once
 
-#include "veins/base/utils/MiXiMDefs.h"
+#include "veins/veins.h"
+
 #include "veins/base/connectionManager/BaseConnectionManager.h"
+
+namespace Veins {
 
 /**
  * @brief BaseConnectionManager implementation which only defines a
@@ -32,21 +34,19 @@
  *
  * @ingroup connectionManager
  */
-class MIXIM_API VlcConnectionManager : public BaseConnectionManager
-{
+class VEINS_API VlcConnectionManager : public BaseConnectionManager {
 protected:
-
-	/**
-	 * @brief Calculate interference distance
-	 *
-	 * Calculation of the interference distance based on the transmitter
-	 * power, wavelength, pathloss coefficient and a threshold for the
-	 * minimal receive Power
-	 *
-	 * You may want to overwrite this function in order to do your own
-	 * interference calculation
-	 */
-	virtual double calcInterfDist();
+    /**
+     * @brief Calculate interference distance
+     *
+     * Calculation of the interference distance based on the transmitter
+     * power, wavelength, pathloss coefficient and a threshold for the
+     * minimal receive Power
+     *
+     * You may want to overwrite this function in order to do your own
+     * interference calculation
+     */
+    virtual double calcInterfDist();
 };
 
-#endif /*VLCCONNECTIONMANAGER_H_*/
+} // namespace Veins

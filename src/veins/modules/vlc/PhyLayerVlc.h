@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2006-2017 Agon Memedi <memedi@ccs-labs.org>
+// Copyright (C) 2016-2018 Agon Memedi <memedi@ccs-labs.org>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,94 +20,109 @@
  * Based on PhyLayer80211p.h from David Eckhoff
  */
 
-#ifndef PHYLAYERVLC_H_
-#define PHYLAYERVLC_H_
+#pragma once
 
 #include "veins/base/phyLayer/BasePhyLayer.h"
-#include "veins/modules/phy/SNRThresholdDecider.h"
+#include "veins/modules/mac/ieee80211p/Mac80211pToPhy11pInterface.h"
 #include "veins/base/connectionManager/BaseConnectionManager.h"
+#include "veins/modules/phy/Decider80211pToPhy80211pInterface.h"
 #include "veins/base/utils/Move.h"
 
-#include "veins/modules/mac/ieee80211p/Mac80211pToPhy11pInterface.h"
 #include "veins/modules/vlc/DeciderVlc.h"
 #include "veins/modules/vlc/analogueModel/EmpiricalLightModel.h"
-#include "veins/modules/phy/Decider80211pToPhy80211pInterface.h"
-
-#include "veins/modules/utility/ConstsPhy.h"
 #include "veins/modules/vlc/utility/ConstsVlc.h"
+
+#include "veins/modules/vlc/analogueModel/LsvLightModel.h"
+#include "veins/modules/vlc/RadiationPattern.h"
+#include "veins/modules/vlc/PhotoDiode.h"
+
+namespace Veins {
 
 using Veins::AirFrame;
 
-#ifndef DBG
-#define DBG EV
-#define VLCDEBUG(word) if(debug) {std::cout << "Module: [" << getFullPath() <<"]: " << word << std::endl;}
-#endif
+/**
+ * @brief
+ * Adaptation of the PhyLayer class for 802.11p.
+ *
+ * @ingroup phyLayer
+ *
+ * @see BaseWaveApplLayer
+ * @see Mac1609_4
+ * @see PhyLayer80211p
+ * @see Decider80211p
+ */
 
-class PhyLayerVlc   :   public BasePhyLayer
-{
-	public:
-		void initialize(int stage);
-	protected:
-		/** @brief enable/disable detection of packet collisions */
-		bool collectCollisionStatistics;
+class PhyLayerVlc : public BasePhyLayer {
+public:
+    void initialize(int stage);
 
-        double bitrate;
-        double bandwidth;
-        double frequency;
-        double power;
-        bool debug;
-        bool deciderDebug;
-        std::string direction;
+    static bool mapsInitialized;
+    static std::map<std::string, RadiationPattern> radiationPatternMap;
+    static std::map<std::string, PhotoDiode> photoDiodeMap;
 
-        virtual void handleMessage(cMessage* msg);
-        virtual void handleSelfMessage(cMessage* msg);
+protected:
+    /** @brief enable/disable detection of packet collisions */
+    bool collectCollisionStatistics;
 
-		/**
-		 * @brief Creates and returns an instance of the AnalogueModel with the
-		 * specified name.
-		 *
-		 * Is able to initialize the following AnalogueModels:
-		 */
-		virtual AnalogueModel* getAnalogueModelFromName(std::string name, ParameterMap& params);
+    /** @brief The power (in mW) to transmit with.*/
+    double txPower;
 
-        /**
-         * @brief Creates and initializes a VehicleObstacleShadowing with the
-         * passed parameter values.
-         */
-        AnalogueModel* initializeVehicleObstacleShadowing(ParameterMap& params);
+    double bitrate;
+    std::string direction;
 
-        /**
-         * @brief Creates and initializes a SimpleObstacleShadowing with the
-         * passed parameter values.
-         */
-        AnalogueModel* initializeSimpleObstacleShadowing(ParameterMap& params);
+    virtual void handleMessage(cMessage* msg);
+    virtual void handleSelfMessage(cMessage* msg);
 
-        /**
-         * @brief Creates and initializes the EmpiricalLightModel with the
-         * passed parameter values.
-         */
-        AnalogueModel* initializeEmpiricalLightModel(ParameterMap& params);
+    /**
+     * @brief Creates and returns an instance of the AnalogueModel with the
+     * specified name.
+     *
+     * Is able to initialize the following AnalogueModels:
+     */
+    virtual AnalogueModel* getAnalogueModelFromName(std::string name, ParameterMap& params);
 
-		/**
-		 * @brief Creates and returns an instance of the Decider with the specified
-		 * name.
-		 */
-		virtual Decider* getDeciderFromName(std::string name, ParameterMap& params);
+    /**
+     * @brief Creates and initializes a VehicleObstacleShadowing with the
+     * passed parameter values.
+     */
+    AnalogueModel* initializeVehicleObstacleShadowingForVlc(ParameterMap& params);
 
-		virtual Decider* initializeDeciderVlc(ParameterMap& params);
+    /**
+     * @brief Creates and initializes the EmpiricalLightModel with the
+     * passed parameter values.
+     */
+    AnalogueModel* initializeEmpiricalLightModel(ParameterMap& params);
 
-		virtual simtime_t setRadioState(int rs);
+    /**
+     * @brief Creates and initializes the LsvLightModel.
+     */
+    AnalogueModel* initializeLsvLightModel(ParameterMap& params);
 
-		int setDirection(const std::string& direction);
+    /**
+     * @brief Creates and returns an instance of the Decider with the specified
+     * name.
+     *
+     * Is able to initialize the following Deciders:
+     *
+     * - DeciderVlc
+     */
+    virtual Decider* getDeciderFromName(std::string name, ParameterMap& params);
 
-		// Methods below are from Mac1609_4
-		/**
-         * @brief This function encapsulates messages from the upper layer into an
-         * AirFrame and sets all necessary attributes.
-         */
-        virtual AirFrame *encapsMsg(cPacket *msg);
-        simtime_t getFrameDuration(int payloadLengthBits) const;
+    /**
+     * @brief Initializes a new Decider80211 from the passed parameter map.
+     */
+    virtual Decider* initializeDeciderVlc(ParameterMap& params);
 
+    int setDirection(const std::string& direction);
+
+    // Methods below are from Mac1609_4
+    /**
+     * @brief This function encapsulates messages from the upper layer into an
+     * AirFrame and sets all necessary attributes.
+     */
+    virtual AirFrame* encapsMsg(cPacket* msg);
+    simtime_t getFrameDuration(int payloadLengthBits) const;
+    virtual simtime_t setRadioState(int rs);
 };
 
-#endif /* PHYLAYERVLC_H_ */
+} // namespace Veins

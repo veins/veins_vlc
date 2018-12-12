@@ -5,13 +5,13 @@
  *      Author: Alexander Brummer
  */
 
-#ifndef POA_H_
-#define POA_H_
+#pragma once
 
 #include "veins/base/phyLayer/Antenna.h"
 #include "veins/base/utils/Coord.h"
 #include <memory>
 
+namespace Veins {
 
 /**
  * @brief Container class used to attach data to Airframe s which are
@@ -41,10 +41,11 @@ public:
     std::shared_ptr<Antenna> antenna;
 
     POA(){};
-    POA(Coord pos, Coord orientation, std::shared_ptr<Antenna> antenna): pos(pos), orientation(orientation), antenna(antenna) {};
+    POA(Coord pos, Coord orientation, std::shared_ptr<Antenna> antenna)
+        : pos(pos)
+        , orientation(orientation)
+        , antenna(antenna){};
     virtual ~POA(){};
 };
 
-
-
-#endif /* POA_H_ */
+} // namespace Veins

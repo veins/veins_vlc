@@ -16,19 +16,36 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
+#pragma once
+
 #include <cmath>
 
 #include <omnetpp.h>
 
+namespace Veins {
+
 using namespace omnetpp;
 
 /*
- * Transform the heading of the vehicle from traci
- * to the angle in OMNeT++
+ * My angle representation
+ * M_PI*1/2 = 90     South
+ * M_PI*1 = 180      West
+ * M_PI*3/2 = 270    North
+ * M_PI*2 = 360      East
  */
-double traci2omnetAngle2(double angleRad);
 
-double omnet2traciAngle2(double angleRad);
+/*
+ * Transform the heading of the vehicle from traci
+ * to my angle representation
+ */
+double traci2myAngle(double angleRad);
+
+/*
+ * Transform the heading of the vehicle from my
+ * angle representation to traci
+ */
+
+double myAngle2traci(double angleRad);
 
 // Reverse the heading of the vehicle
 double reverseTraci(double angleRad);
@@ -45,6 +62,8 @@ double utilTrunc(double number);
 bool close(double one, double two);
 
 // Return BER of OOK at the given SNR.
-double getOokBer (double snr);
+double getOokBer(double snr);
 
-double getOokPdr (double snr, int packetLength);
+double getOokPdr(double snr, int packetLength);
+
+} // namespace Veins

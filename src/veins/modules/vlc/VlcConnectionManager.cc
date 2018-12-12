@@ -26,7 +26,9 @@
 #define ccEV EV << getName() << ": "
 #endif
 
-Define_Module( VlcConnectionManager );
+Define_Module(Veins::VlcConnectionManager);
+
+using namespace Veins;
 
 double VlcConnectionManager::calcInterfDist()
 {
@@ -34,4 +36,3 @@ double VlcConnectionManager::calcInterfDist()
     // there communication is not possible above 350 m, so this presents an upper-bound
     return 380;
 }
-

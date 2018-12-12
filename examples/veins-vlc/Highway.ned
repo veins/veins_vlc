@@ -21,15 +21,13 @@
 
 import org.car2x.veins.base.connectionManager.ConnectionManager;
 import org.car2x.veins.base.modules.BaseWorldUtility;
-import org.car2x.veins.modules.mobility.traci.TraCIScenarioManagerForker;
+import org.car2x.veins.modules.mobility.traci.TraCIScenarioManager*;
 import org.car2x.veins.modules.obstacle.ObstacleControl;
-import org.car2x.veins.modules.world.annotations.AnnotationManager;
-import org.car2x.veins.modules.world.annotations.AnnotationManager;
+import org.car2x.veins.modules.obstacle.VehicleObstacleControl;
 import org.car2x.veins.modules.vlc.CarVlcMobility;
 import org.car2x.veins.modules.vlc.VlcConnectionManager;
-//import org.car2x.veins.modules.utility.packetMonitor.PacketMonitor;
+import org.car2x.veins.modules.world.annotations.AnnotationManager;
 
-import org.car2x.veins.modules.mobility.traci.TraCIScreenRecorder;
 
 module Highway
 {
@@ -42,12 +40,15 @@ module Highway
 
     submodules:
 //        moduleType[maxNum] -- The max number of the modules of type moduleType
- 
+
  		// Total number of vehicles should be 7
         node[nodesCount]: CarVlcMobility {
             @display("p=349,206");
         }
         obstacles: ObstacleControl {
+            @display("p=261,35");
+        }
+        vehicleObstacles: VehicleObstacleControl {
             @display("p=261,35");
         }
         annotations: AnnotationManager {
@@ -68,14 +69,10 @@ module Highway
                 playgroundSizeZ = playgroundSizeZ;
                 @display("p=34,31;i=misc/globe");
         }
-        manager: TraCIScenarioManagerForker {
+        manager: TraCIScenarioManagerLaunchd {
             parameters:
                 @display("p=34,206");
         }
-        
-//        screenRecorder: TraCIScreenRecorder {
-//            parameters:
-//                @display("p=34,413");
-//        }
+
     connections allowunconnected:
 }

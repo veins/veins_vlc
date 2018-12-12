@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2006-2017 Agon Memedi <memedi@ccs-labs.org>
+// Copyright (C) 2016-2018 Agon Memedi <memedi@ccs-labs.org>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,80 +18,103 @@
 
 /*
  * Based on Decider80211p.h from David Eckhoff
- * and modifications by Bastian Bloessl, Stefan Joerer, Michele Segata
+ * and modifications by Bastian Bloessl, Stefan Joerer, Michele Segata, Fabian Bronner
  *
  * For the description of the methods see the similar functions in Decider80211p.h
  */
 
-#ifndef DECIDERVLC_H_
-#define DECIDERVLC_H_
+#pragma once
 
 #include "veins/base/phyLayer/BaseDecider.h"
-#include "veins/modules/mobility/traci/TraCIMobility.h"
+
+namespace Veins {
 
 using Veins::AirFrame;
-using Veins::TraCIMobility;
 
-#define DECIDER_VLC_DBG(word) if(debug) {std::cout << "\tModule: [" << myPhy << ".decider" <<"]: " << word << std::endl;}
+/**
+ * @brief
+ * Based on Decider80211.h from Karl Wessel
+ * and modifications by Christopher Saloman
+ *
+ * @author Agon Memedi
+ *
+ * @ingroup decider
+ *
+ * @see PhyLayerVlc
+ * @see DeciderVlc
+ */
+class DeciderVlc : public BaseDecider {
+public:
+    enum PACKET_OK_RESULT {
+        DECODED,
+        NOT_DECODED,
+        COLLISION
+    };
 
-class AirFrameVlc;
+protected:
+    bool debug = true;
+    double centerFrequency;
+    double bitrate;
+    std::string direction;
 
-class DeciderVlc: public BaseDecider {
-    public:
-        enum PACKET_OK_RESULT {DECODED, NOT_DECODED, COLLISION};
+    double myBusyTime;
+    double myStartTime;
 
-    protected:
-        bool debug;
-        double centerFrequency;
-        double bandwidth;
-        double bitrate;
-        std::string direction;
+    std::map<AirFrame*, int> signalStates;
+    bool collectCollisionStats;
+    unsigned int collisions;
 
-        double myBusyTime;
-        double myStartTime;
-        std::string myPhy;
-        std::map<AirFrame*,int> signalStates;
-        bool collectCollisionStats;
-        unsigned int collisions;
+protected:
+    /**
+     * @brief Checks a mapping against a specific threshold (element-wise).
+     *
+     * @return    true    , if every entry of the mapping is above threshold
+     *             false    , otherwise
+     *
+     *
+     */
+    virtual DeciderResult* checkIfSignalOk(AirFrame* frame);
 
-    protected:
-        DeciderResult* checkIfSignalOk(AirFrame* frame);
-        virtual simtime_t processNewSignal(AirFrame* frame);
-        virtual simtime_t processSignalEnd(AirFrame* frame);
-        void calculateSinrAndSnrMapping(AirFrame* frame, Mapping **sinrMap, Mapping **snrMap);
-        Mapping* calculateNoiseRSSIMapping(simtime_t_cref start, simtime_t_cref end, AirFrame *exclude);
-        enum DeciderVlc::PACKET_OK_RESULT packetOk(double snirMin, double snrMin, int lengthMPDU, double bitrate, AirFrameVlc* frame);
+    virtual simtime_t processNewSignal(AirFrame* frame);
 
-    public:
-        DeciderVlc(DeciderToPhyInterface* phy,
-                      double sensitivity,
-                      double centerFrequency,
-                      double bw,
-                      double bRate,
-                      const std::string lightDir,
-                      int myIndex = -1,
-                      bool coreDebug = false,
-                      bool collectCollisionStatistics = false,
-                      bool debug = false):
-            BaseDecider(phy, sensitivity, myIndex, coreDebug),
-            centerFrequency(centerFrequency),
-            bandwidth(bw),
-            bitrate(bRate),
-            direction(lightDir),
-            collectCollisionStats(collectCollisionStatistics),
-            debug(debug),
-            myBusyTime(0),
-            myStartTime(simTime().dbl())
-            {
-                DECIDER_VLC_DBG("DeciderVLC constructor called!");
-                cModule *mod = check_and_cast<cModule *>(phy);
-                myPhy = mod->getFullPath();
-            }
+    /**
+     * @brief Processes a received AirFrame.
+     *
+     * The SNR-mapping for the Signal is created and checked against the Deciders
+     * SNR-threshold. Depending on that the received AirFrame is either sent up
+     * to the MAC-Layer or dropped.
+     *
+     * @return    usually return a value for: 'do not pass it again'
+     */
+    virtual simtime_t processSignalEnd(AirFrame* frame);
 
-        int getSignalState(AirFrame* frame);
-        virtual ~DeciderVlc();
-        virtual void finish();
+    /** @brief computes if packet is ok or has errors*/
+    enum DeciderVlc::PACKET_OK_RESULT packetOk(double snirMin, double snrMin, int lengthMPDU, double bitrate);
 
+public:
+    /**
+     * @brief Initializes the Decider with a pointer to its PhyLayer and
+     * specific values for threshold and sensitivity
+     */
+    DeciderVlc(DeciderToPhyInterface* phy, double sensitivity, double centerFrequency, double bRate, const std::string lightDir, int myIndex = -1, bool collectCollisionStatistics = false)
+        : BaseDecider(phy, sensitivity, myIndex)
+        , centerFrequency(centerFrequency) // not used in this decider
+        , bitrate(bRate)
+        , direction(lightDir)
+        , collectCollisionStats(collectCollisionStatistics)
+        , myBusyTime(0)
+        , myStartTime(simTime().dbl())
+    {
+    }
+
+    int getSignalState(AirFrame* frame);
+    virtual ~DeciderVlc();
+    /**
+     * @brief invoke this method when the phy layer is also finalized,
+     * so that statistics recorded by the decider can be written to
+     * the output file
+     */
+    virtual void finish();
 };
 
-#endif
+} // namespace Veins

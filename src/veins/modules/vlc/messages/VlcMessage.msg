@@ -17,7 +17,7 @@
 //
 
 cplusplus {{
-#include "veins/modules/messages/WaveShortMessage_m.h"
+#include "veins/modules/messages/BaseFrame1609_4_m.h"
 
 #define VLC 30
 #define DSRC 31
@@ -28,9 +28,9 @@ cplusplus {{
 #define BOTH_LIGHTS 313	// Middleware will create two copies of the same message; One sent via HEADLIGHT, one sent via TAILLIGHT.   
 }}
 
-class WaveShortMessage;	
+class Veins::BaseFrame1609_4;	
 
-message VlcMessage extends WaveShortMessage {
+message VlcMessage extends Veins::BaseFrame1609_4 {
 	string sourceNode;
 	string destinationNode;		
 	int accessTechnology;

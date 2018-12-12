@@ -20,339 +20,388 @@
  * Based on PhyLayer80211p.cc from David Eckhoff
  */
 
-#include "veins/modules/vlc/DeciderVlc.h"
 #include "veins/modules/vlc/PhyLayerVlc.h"
-#include "veins/modules/analogueModel/SimplePathlossModel.h"
-#include "veins/modules/analogueModel/PERModel.h"
-#include "veins/base/modules/BaseMacLayer.h" // Needed for createSingleFrequencyMapping()
-#include "veins/base/phyLayer/MacToPhyControlInfo.h"
 
-#include "veins/modules/vlc/messages/AirFrameVlc_m.h"
-
+#include "veins/modules/vlc/DeciderVlc.h"
 #include "veins/modules/analogueModel/SimpleObstacleShadowing.h"
-#include "veins/modules/analogueModel/VehicleObstacleShadowing.h"
+#include "veins/modules/vlc/analogueModel/VehicleObstacleShadowingForVlc.h"
 #include "veins/base/connectionManager/BaseConnectionManager.h"
 #include "veins/modules/messages/AirFrame11p_m.h"
+#include "veins/modules/vlc/messages/AirFrameVlc_m.h"
+#include "veins/base/phyLayer/MacToPhyControlInfo.h"
 
-using Veins::ObstacleControlAccess;
+#include "veins/base/modules/BaseMacLayer.h" // Needed for createSingleFrequencyMapping()
 
-Define_Module(PhyLayerVlc);
+using namespace Veins;
 
-void PhyLayerVlc::initialize(int stage) {
-	if (stage == 0) {
-		debug = par("debug").boolValue();
-		deciderDebug = par("deciderDebug").boolValue();
+Define_Module(Veins::PhyLayerVlc);
 
-		power = par("txPower").doubleValue();
-        if(power != FIXED_REFERENCE_POWER_MW)
+/* Used for the LsvLightModel */
+bool PhyLayerVlc::mapsInitialized = false;
+std::map<std::string, PhotoDiode> PhyLayerVlc::photoDiodeMap = std::map<std::string, PhotoDiode>();
+std::map<std::string, RadiationPattern> PhyLayerVlc::radiationPatternMap = std::map<std::string, RadiationPattern>();
+
+void PhyLayerVlc::initialize(int stage)
+{
+    if (stage == 0) {
+        txPower = par("txPower").doubleValue();
+        if (txPower != FIXED_REFERENCE_POWER_MW)
             error("You have set the wrong reference power (txPower) in omnetpp.ini. Should be fixed to: FIXED_REFERENCE_POWER");
         bitrate = par("bitrate").doubleValue();
-        bandwidth = par("bandwidth").doubleValue();
-        frequency = par("centerFrequency").doubleValue();
         direction = getParentModule()->par("direction").stringValue();
         collectCollisionStatistics = par("collectCollisionStatistics").boolValue();
-
-//        VLCDEBUG("[READING CONFIG XML PARAMETERS]"
-//                << "\nPower: " << power
-//                << "\nBitrate: " << bitrate
-//                << "\nBandwidth: " << bandwidth
-//                << "\nFrequency: " << frequency
-//                << "\nDirection: " << direction
-//                << "\nCollectCollisionStatistics: " << collectCollisionStatistics
-//                )
-	}
-	BasePhyLayer::initialize(stage);
-	if (stage == 0) {
-	    // TODO: maybe check the lengths of the VLC packet fields
-		//erase the RadioStateAnalogueModel
-		analogueModels.erase(analogueModels.begin());
-	}
+    }
+    BasePhyLayer::initialize(stage);
+    if (stage == 0) {
+        // TODO: maybe check the lengths of the VLC packet fields
+    }
 }
 
-AnalogueModel* PhyLayerVlc::getAnalogueModelFromName(std::string name, ParameterMap& params) {
+AnalogueModel* PhyLayerVlc::getAnalogueModelFromName(std::string name, ParameterMap& params)
+{
 
-	if (name == "EmpiricalLightModel") {
+    if (name == "EmpiricalLightModel") {
         return initializeEmpiricalLightModel(params);
     }
-	else if (name == "VehicleObstacleShadowing") {
-        return initializeVehicleObstacleShadowing(params);
+    else if (name == "LsvLightModel") {
+        return initializeLsvLightModel(params);
     }
-    else if (name == "SimpleObstacleShadowing") {
-        return initializeSimpleObstacleShadowing(params);
+    else if (name == "VehicleObstacleShadowingForVlc") {
+        return initializeVehicleObstacleShadowingForVlc(params);
     }
-	return BasePhyLayer::getAnalogueModelFromName(name, params);
+    return BasePhyLayer::getAnalogueModelFromName(name, params);
 }
 
-AnalogueModel* PhyLayerVlc::initializeEmpiricalLightModel(ParameterMap& params) {
+AnalogueModel* PhyLayerVlc::initializeEmpiricalLightModel(ParameterMap& params)
+{
 
     bool debug;
     double headlightMaxTxRange = 0.0, taillightMaxTxRange = 0.0, headlightMaxTxAngle = 0.0, taillightMaxTxAngle = 0.0;
     ParameterMap::iterator it;
 
-    it = params.find("debug");
-    // check if parameter specified in config.xml
-    if ( it != params.end() ){
-        debug = it->second.boolValue();
-    }
-    else{
-        error("`debug` has not been specified in config-vlc.xml");
-    }
-
     it = params.find("headlightMaxTxRange");
-    if ( it != params.end() ){
+    if (it != params.end()) {
         headlightMaxTxRange = it->second.doubleValue();
     }
-    else{
+    else {
         error("`headlightMaxTxRange` has not been specified in config-vlc.xml");
     }
 
     it = params.find("taillightMaxTxRange");
-    if ( it != params.end() ){
+    if (it != params.end()) {
         taillightMaxTxRange = it->second.doubleValue();
     }
-    else{
+    else {
         error("`taillightMaxTxRange` has not been specified in config-vlc.xml");
     }
 
     it = params.find("headlightMaxTxAngle");
-    if ( it != params.end() ){
+    if (it != params.end()) {
         headlightMaxTxAngle = it->second.doubleValue();
     }
-    else{
+    else {
         error("`headlightMaxTxAngle` has not been specified in config-vlc.xml");
     }
 
     it = params.find("taillightMaxTxAngle");
-    if ( it != params.end() ){
+    if (it != params.end()) {
         taillightMaxTxAngle = it->second.doubleValue();
     }
-    else{
+    else {
         error("`taillightMaxTxAngle` has not been specified in config-vlc.xml");
     }
 
-//    VLCDEBUG("[READING ANALOG MODEL PARAMETERS]"
-//            << "headlightMaxTxRange: " << headlightMaxTxRange
-//            << "taillightMaxTxRange: " << taillightMaxTxRange
-//            << "headlightMaxTxAngle: " << headlightMaxTxAngle
-//            << "taillightMaxTxAngle: " << taillightMaxTxAngle
-//            )
-
     // BasePhyLayer converts sensitivity from config.xml to mW @ line 72. Convert it back to dBm
-    return new EmpiricalLightModel(debug, FWMath::mW2dBm(sensitivity), headlightMaxTxRange, taillightMaxTxRange, headlightMaxTxAngle, taillightMaxTxAngle);
+    return new EmpiricalLightModel(FWMath::mW2dBm(sensitivity), headlightMaxTxRange, taillightMaxTxRange, headlightMaxTxAngle, taillightMaxTxAngle);
 }
 
-Decider* PhyLayerVlc::getDeciderFromName(std::string name, ParameterMap& params) {
-  if(name == "DeciderVlc") {
-      return initializeDeciderVlc(params);
-  }
-  return BasePhyLayer::getDeciderFromName(name, params);
+//  version using line-by-line parsing
+AnalogueModel* PhyLayerVlc::initializeLsvLightModel(ParameterMap& params)
+{
+    if (mapsInitialized == false) {
+
+        ParameterMap::iterator it;
+        std::string radiationPatternFile;
+        std::string photoDiodeFile;
+
+        it = params.find("radiationPatternFile");
+        if (it != params.end()) {
+            radiationPatternFile = it->second.stringValue();
+        }
+        else {
+            error("`radiationPatternFile` has not been specified in config-vlc-lsv.xml");
+        }
+
+        it = params.find("photoDiodeFile");
+        if (it != params.end()) {
+            photoDiodeFile = it->second.stringValue();
+        }
+        else {
+            error("`photoDiodeFile` has not been specified in config-vlc-lsv.xml");
+        }
+
+        // For file parsing
+        std::ifstream inputFile(radiationPatternFile);
+        std::string line;
+        int lineCounter;
+        double value;
+
+        // For radiation pattern
+        std::string Id;
+        std::vector<double> patternL, patternR, anglesL, anglesR, spectralEmission;
+
+        lineCounter = 0;
+        while (std::getline(inputFile, line)) {
+            std::istringstream iss(line);
+            switch (lineCounter) {
+            case 0:
+                iss >> Id;
+                ++lineCounter;
+                break;
+            case 1:
+                while (iss >> value) patternL.push_back(value);
+                ++lineCounter;
+                break;
+            case 2:
+                while (iss >> value) patternR.push_back(value);
+                ++lineCounter;
+                break;
+            case 3:
+                while (iss >> value) anglesL.push_back(value);
+                ++lineCounter;
+                break;
+            case 4:
+                while (iss >> value) anglesR.push_back(value);
+                ++lineCounter;
+                break;
+            case 5:
+                while (iss >> value) spectralEmission.push_back(value);
+                lineCounter = 0;
+                radiationPatternMap.insert(std::pair<std::string, RadiationPattern>(Id, RadiationPattern(Id, patternL, patternR, anglesL, anglesR, spectralEmission)));
+                // Clear all vectors for next pattern
+                patternL.clear();
+                patternR.clear();
+                anglesL.clear();
+                anglesR.clear();
+                spectralEmission.clear();
+                break;
+            }
+            iss.str("");
+        }
+
+        // For file parsing
+        std::ifstream inputFile2(photoDiodeFile);
+
+        // For photodiode
+        double area, gain;
+        std::vector<double> spectralResponse;
+
+        lineCounter = 0;
+        while (std::getline(inputFile2, line)) {
+            std::istringstream iss(line);
+            switch (lineCounter) {
+            case 0:
+                iss >> Id;
+                ++lineCounter;
+                break;
+            case 1:
+                iss >> area;
+                ++lineCounter;
+                break;
+            case 2:
+                iss >> gain;
+                ++lineCounter;
+                break;
+            case 3:
+                while (iss >> value) spectralResponse.push_back(value);
+                lineCounter = 0;
+                photoDiodeMap.insert(std::pair<std::string, PhotoDiode>(Id, PhotoDiode(Id, area, gain, spectralResponse)));
+                spectralResponse.clear();
+                break;
+            }
+            iss.str("");
+        }
+        mapsInitialized = true;
+    }
+    return new LsvLightModel(&radiationPatternMap, &photoDiodeMap, FWMath::mW2dBm(sensitivity));
 }
 
-AnalogueModel* PhyLayerVlc::initializeSimpleObstacleShadowing(ParameterMap& params){
+Decider* PhyLayerVlc::getDeciderFromName(std::string name, ParameterMap& params)
+{
+    if (name == "DeciderVlc") {
+        return initializeDeciderVlc(params);
+    }
+    return BasePhyLayer::getDeciderFromName(name, params);
+}
+
+AnalogueModel* PhyLayerVlc::initializeVehicleObstacleShadowingForVlc(ParameterMap& params)
+{
 
     // init with default value
-    double carrierFrequency = 5.890e+9;
+    double carrierFrequency = 666e12;
     bool useTorus = world->useTorus();
     const Coord& playgroundSize = *(world->getPgs());
 
     ParameterMap::iterator it;
 
-    // get carrierFrequency from config
+    // get carrierFrequency from config-vlc
     it = params.find("carrierFrequency");
 
-    if ( it != params.end() ) // parameter carrierFrequency has been specified in config.xml
-    {
+    if (it != params.end()) { // parameter carrierFrequency has been specified in config-vlc.xml
         // set carrierFrequency
         carrierFrequency = it->second.doubleValue();
-        coreEV << "initializeSimpleObstacleShadowing(): carrierFrequency set from config.xml to " << carrierFrequency << endl;
+        EV_TRACE << "initializeVehicleObstacleShadowingForVlc(): carrierFrequency set from config-vlc.xml to " << carrierFrequency << endl;
 
         // check whether carrierFrequency is not smaller than specified in ConnectionManager
-        if(cc->hasPar("carrierFrequency") && carrierFrequency < cc->par("carrierFrequency").doubleValue())
-        {
+        if (cc->hasPar("carrierFrequency") && carrierFrequency < cc->par("carrierFrequency").doubleValue()) {
             // throw error
-            throw cRuntimeError("initializeSimpleObstacleShadowing(): carrierFrequency can't be smaller than specified in ConnectionManager. Please adjust your config.xml file accordingly");
+            throw cRuntimeError("initializeVehicleObstacleShadowingForVlc(): carrierFrequency can't be smaller than specified in ConnectionManager. Please adjust your config-vlc.xml file accordingly");
         }
     }
-    else // carrierFrequency has not been specified in config.xml
+    else // carrierFrequency has not been specified in config-vlc.xml
     {
-        if (cc->hasPar("carrierFrequency")) // parameter carrierFrequency has been specified in ConnectionManager
-        {
+        if (cc->hasPar("carrierFrequency")) { // parameter carrierFrequency has been specified in ConnectionManager
             // set carrierFrequency according to ConnectionManager
             carrierFrequency = cc->par("carrierFrequency").doubleValue();
-            coreEV << "createPathLossModel(): carrierFrequency set from ConnectionManager to " << carrierFrequency << endl;
+            EV_TRACE << "createPathLossModel(): carrierFrequency set from ConnectionManager to " << carrierFrequency << endl;
         }
         else // carrierFrequency has not been specified in ConnectionManager
         {
             // keep carrierFrequency at default value
-            coreEV << "createPathLossModel(): carrierFrequency set from default value to " << carrierFrequency << endl;
+            EV_TRACE << "createPathLossModel(): carrierFrequency set from default value to " << carrierFrequency << endl;
         }
     }
 
-    ObstacleControl* obstacleControlP = ObstacleControlAccess().getIfExists();
-    if (!obstacleControlP) throw cRuntimeError("initializeSimpleObstacleShadowing(): cannot find ObstacleControl module");
-    return new SimpleObstacleShadowing(*obstacleControlP, carrierFrequency, useTorus, playgroundSize, coreDebug);
+    VehicleObstacleControl* vehicleObstacleControlP = VehicleObstacleControlAccess().getIfExists();
+    if (!vehicleObstacleControlP) throw cRuntimeError("initializeVehicleObstacleShadowingForVlc(): cannot find VehicleObstacleControl module");
+    return new VehicleObstacleShadowingForVlc(*vehicleObstacleControlP, carrierFrequency, useTorus, playgroundSize);
 }
 
-AnalogueModel* PhyLayerVlc::initializeVehicleObstacleShadowing(ParameterMap& params){
-
-    // init with default value
-    double carrierFrequency = 2.412e+9;
-    bool useTorus = world->useTorus();
-    const Coord& playgroundSize = *(world->getPgs());
-    bool enableVlc = true;
-
-    ParameterMap::iterator it;
-
-    // get carrierFrequency from config
-    it = params.find("carrierFrequency");
-
-    if ( it != params.end() ) // parameter carrierFrequency has been specified in config.xml
-    {
-        // set carrierFrequency
-        carrierFrequency = it->second.doubleValue();
-        coreEV << "initializeVehicleObstacleShadowing(): `carrierFrequency` set from config-vlc.xml: " << carrierFrequency << endl;
-
-        // check whether carrierFrequency is not smaller than specified in ConnectionManager
-        if(cc->hasPar("carrierFrequency") && carrierFrequency < cc->par("carrierFrequency").doubleValue())
-        {
-            // throw error
-            throw cRuntimeError("initializeSimpleObstacleShadowing(): carrierFrequency can't be smaller than specified in ConnectionManager. Please adjust your config.xml file accordingly");
-        }
-    }
-    else // carrierFrequency has not been specified in config.xml
-    {
-        if (cc->hasPar("carrierFrequency")) // parameter carrierFrequency has been specified in ConnectionManager
-        {
-            // set carrierFrequency according to ConnectionManager
-            carrierFrequency = cc->par("carrierFrequency").doubleValue();
-            coreEV << "createPathLossModel(): carrierFrequency set from ConnectionManager to " << carrierFrequency << endl;
-        }
-        else // carrierFrequency has not been specified in ConnectionManager
-        {
-            // keep carrierFrequency at default value
-            coreEV << "createPathLossModel(): carrierFrequency set from default value to " << carrierFrequency << endl;
-        }
-    }
-
-    it = params.find("enableVlc");
-    if ( it != params.end() ){
-        enableVlc = it->second.boolValue();
-    }
-    else{
-        error("`enableVlc` has not been specified in config-vlc.xml");
-    }
-
-    ObstacleControl* obstacleControlP = ObstacleControlAccess().getIfExists();
-    if (!obstacleControlP) throw cRuntimeError("initializeVehicleObstacleShadowing(): cannot find ObstacleControl module");
-    return new VehicleObstacleShadowing(*obstacleControlP, carrierFrequency, useTorus, playgroundSize, coreDebug, enableVlc);
+Decider* PhyLayerVlc::initializeDeciderVlc(ParameterMap& params)
+{
+    double centerFreq = params["centerFrequency"];
+    DeciderVlc* dec = new DeciderVlc(this, sensitivity, centerFreq, bitrate, direction, findHost()->getIndex(), collectCollisionStatistics);
+    // dec->setPath(getParentModule()->getFullPath());
+    return dec;
 }
 
-Decider* PhyLayerVlc::initializeDeciderVlc(ParameterMap& params) {
-  double centerFreq = params["centerFrequency"];
-  ASSERT2(centerFreq == frequency, "`frequency` in omnetpp.ini is not the same with `centerFrequency` from `config.xml`");
-  DeciderVlc* dec = new DeciderVlc(this, sensitivity, centerFreq, bandwidth, bitrate, direction, findHost()->getIndex(), coreDebug, collectCollisionStatistics, deciderDebug);
-  return dec;
-}
-
-void PhyLayerVlc::handleMessage(cMessage* msg) {
-    //self messages
-    if(msg->isSelfMessage()) {
+void PhyLayerVlc::handleMessage(cMessage* msg)
+{
+    // self messages
+    if (msg->isSelfMessage()) {
         handleSelfMessage(msg);
 
-    //MacPkts <- MacToPhyControlInfo
-    // msg received from our upper layer, i.e., msg we should send to the channel
-    } else if(msg->getArrivalGateId() == upperLayerIn) {
+        // MacPkts <- MacToPhyControlInfo
+    }
+    else if (msg->getArrivalGateId() == upperLayerIn) {
+        // FIXME: is this needed?
         setRadioState(Veins::Radio::TX);
         BasePhyLayer::handleUpperMessage(msg);
 
-    //Control messages
-    } else if(msg->getArrivalGateId() == upperControlIn) {
+        // controlmessages
+    }
+    else if (msg->getArrivalGateId() == upperControlIn) {
         BasePhyLayer::handleUpperControlMessage(msg);
 
-    //AirFrames
-    // msg received over air from other NICs
-    } else if(msg->getKind() == AIR_FRAME){
-        if(dynamic_cast<AirFrame11p *>(msg)){
-            VLCDEBUG("Received message of type AirFrame11p, this message will be discarded")
+        // AirFrames
+        // msg received over air from other NICs
+    }
+    else if (msg->getKind() == AIR_FRAME) {
+        if (dynamic_cast<AirFrame11p*>(msg)) {
+            EV_TRACE << "Received message of type AirFrame11p, this message will be discarded" << std::endl;
             bubble("received message of type AirFrame11p, this message will be discarded!");
             getParentModule()->bubble("received message of type AirFrame11p, this message will be discarded!");
             delete msg;
             return;
         }
-        if(dynamic_cast<AirFrameVlc *>(msg) ){
-            AirFrameVlc* VlcMsg = check_and_cast<AirFrameVlc *>(msg);
+        if (dynamic_cast<AirFrameVlc*>(msg)) {
+            AirFrameVlc* VlcMsg = check_and_cast<AirFrameVlc*>(msg);
             std::string txNode = VlcMsg->getSenderModule()->getModuleByPath("^.^.")->getFullName();
-            if(txNode == getModuleByPath("^.^.")->getFullName() ){
-                VLCDEBUG("Discarding received AirFrameVlc within the same host: " << VlcMsg->getSenderModule()->getFullPath())
+            if (txNode == getModuleByPath("^.^.")->getFullName()) {
+                EV_TRACE << "Discarding received AirFrameVlc within the same host: " << VlcMsg->getSenderModule()->getFullPath() << std::endl;
                 delete msg;
                 return;
             }
-            else{
-                VLCDEBUG("AirFrameVlc id: " << VlcMsg->getId() <<" handed to VLC PHY from: " << VlcMsg->getSenderModule()->getFullPath())
+            else {
+                EV_TRACE << "AirFrameVlc id: " << VlcMsg->getId() << " handed to VLC PHY from: " << VlcMsg->getSenderModule()->getFullPath() << std::endl;
                 bubble("Handing AirFrameVlc to lower layers to decide if it can be received");
                 BasePhyLayer::handleAirFrame(static_cast<AirFrame*>(msg));
             }
         }
-    //unknown message
-    } else {
+    }
+    else {
         EV << "Unknown message received." << endl;
         delete msg;
     }
 }
 
-simtime_t PhyLayerVlc::setRadioState(int rs) {
-    radio->switchTo(Radio::TX, simTime());
-    radio->endSwitch(simTime());
-    return SimTime(0);
-}
+void PhyLayerVlc::handleSelfMessage(cMessage* msg)
+{
 
-AirFrame *PhyLayerVlc::encapsMsg(cPacket *macPkt)
+    switch (msg->getKind()) {
+    // transmission overBasePhyLayer::
+    case TX_OVER: {
+        assert(msg == txOverTimer);
+        // TODO: Need a mechanism to inform the upper layers that the txOverTimer arrived
+        break;
+    }
+    // radio switch over
+    case RADIO_SWITCHING_OVER:
+        assert(msg == radioSwitchingOverTimer);
+        BasePhyLayer::finishRadioSwitching();
+        break;
+
+    // AirFrame
+    case AIR_FRAME:
+        BasePhyLayer::handleAirFrame(static_cast<AirFrame*>(msg));
+        break;
+
+    default:
+        break;
+    }
+}
+AirFrame* PhyLayerVlc::encapsMsg(cPacket* macPkt)
 {
     // Similar to createSignal() & attachSignal() of the Mac1609_4
-    int headerLength = PHY_VLC_HEADER;      // length of the phy header (preamble w/o signal), used later when constructing phy frame
-//    setParametersForBitrate(bitrate);
-    //macPkt->addBitLength(PHY_VLC_MHR);    // Not modeling the MAC frame size; MHR is part of PSDU according to standard so we assume the whole macPkt contains it
+    int headerLength = PHY_VLC_HEADER; // length of the phy header (preamble w/o signal), used later when constructing phy frame
+    //    setParametersForBitrate(bitrate);
+    // macPkt->addBitLength(PHY_VLC_MHR);    // Not modeling the MAC frame size; MHR is part of PSDU according to standard so we assume the whole macPkt contains it
+
+    // Initialize spectrum for signal representation here
+    Spectrum overallSpectrum = Spectrum({666e12});
 
     // From Mac1609_4::attachSignal()
     simtime_t startTime = simTime();
-    simtime_t duration = getFrameDuration(macPkt->getBitLength());  // Everything from the upper layer is considered as the PSDU
+    simtime_t duration = getFrameDuration(macPkt->getBitLength()); // Everything from the upper layer is considered as the PSDU
 
     // From Mac1609_4::createSignal()
     simtime_t start = startTime;
     simtime_t length = duration;
 
-    simtime_t end = start + length;
-    //create signal with start at current simtime and passed length
-    Signal* s = new Signal(start, length);
+    Signal* s = new Signal(overallSpectrum, start, length);
 
-    //create and set tx power mapping
-    ConstMapping* txPowerMapping = BaseMacLayer::createSingleFrequencyMapping(start, end, frequency, bandwidth/2, FIXED_REFERENCE_POWER_MW);
-    s->setTransmissionPower(txPowerMapping);
+    (*s)[0] = txPower;
 
-    Mapping* bitrateMapping = MappingUtils::createMapping(DimensionSet::timeDomain(), Mapping::STEPS);
+    s->setBitrate(bitrate);
 
-    Argument pos(start);                            // Initialize a position with time dimension which corresponds to the start
-    bitrateMapping->setValue(pos, bitrate);         // For current pos set the bitrate (this is the header bitrate indicator)
+    s->setDataStart(0);
+    s->setDataEnd(0);
 
-    pos.setTime(start + (headerLength / bitrate));  // Modify the time-point of pos to point to a time-point after the header
-    bitrateMapping->setValue(pos, bitrate);         // Set new bitrate for the new time point (payload bitrate indicator)
-    s->setBitrate(bitrateMapping);
-
+    s->setCenterFrequencyIndex(0);
 
     // From PhyLayer80211p::encapsMsg()
     AirFrameVlc* frame = new AirFrameVlc(macPkt->getName(), AIR_FRAME);
     frame->setHeadOrNot(setDirection(direction));
 
     // set the members
-    VLCDEBUG("s->getDuration(): " << s->getDuration())
     assert(s->getDuration() > 0);
     frame->setDuration(s->getDuration());
     // copy the signal into the AirFrame
     frame->setSignal(*s);
-    //set priority of AirFrames above the normal priority to ensure
-    //channel consistency (before any thing else happens at a time
-    //point t make sure that the channel has removed every AirFrame
-    //ended at t and added every AirFrame started at t)
+    // set priority of AirFrames above the normal priority to ensure
+    // channel consistency (before any thing else happens at a time
+    // point t make sure that the channel has removed every AirFrame
+    // ended at t and added every AirFrame started at t)
     frame->setSchedulingPriority(airFramePriority());
     frame->setProtocolId(myProtocolId());
     frame->setBitLength(headerLength);
@@ -368,59 +417,37 @@ AirFrame *PhyLayerVlc::encapsMsg(cPacket *macPkt)
 
     // --- from here on, the AirFrame is the owner of the MacPacket ---
     macPkt = 0;
-    VLCDEBUG("AirFrame w/ id: " << frame->getId() << " encapsulated, bit length: " << frame->getBitLength())
+    EV_TRACE << "AirFrame w/ id: " << frame->getId() << " encapsulated, bit length: " << frame->getBitLength() << "\n";
 
     return frame;
 }
 
-simtime_t PhyLayerVlc::getFrameDuration(int payloadLengthBits) const {
+simtime_t PhyLayerVlc::setRadioState(int rs)
+{
+    if (rs == Radio::TX) decider->switchToTx();
+    return BasePhyLayer::setRadioState(rs);
+}
+
+simtime_t PhyLayerVlc::getFrameDuration(int payloadLengthBits) const
+{
     // Following assumptions apply:
     // i) The SHR and the HEADER are sent with the same bitrate as the payload
     // ii) Due to OOK, the number of bits per symbol (n_nbps) == 1, so the payload is not divided
-    simtime_t duration = (PHY_VLC_SHR + PHY_VLC_HEADER)/bitrate + payloadLengthBits/bitrate;
+    simtime_t duration = (PHY_VLC_SHR + PHY_VLC_HEADER) / bitrate + payloadLengthBits / bitrate;
     return duration;
 }
 
-int PhyLayerVlc::setDirection(const std::string& direction) {
+int PhyLayerVlc::setDirection(const std::string& direction)
+{
 
     if (direction == "head") {
         return HEAD;
     }
-    else if (direction == "tail"){
+    else if (direction == "tail") {
         return TAIL;
     }
-    else{
-        error("Parameter `direction` is set wrongly in your config! It is neither `head` nor `tail`!");
+    else {
+        error("Parameter `direction` is set wrongly in your config-vlc! It is neither `head` nor `tail`!");
         return 0;
     }
-}
-
-void PhyLayerVlc::handleSelfMessage(cMessage* msg) {
-
-	switch(msg->getKind()) {
-	//transmission overBasePhyLayer::
-	case TX_OVER: {
-		assert(msg == txOverTimer);
-		//TODO: Need a mechanism to inform the upper layers that the txOverTimer arrived
-		break;
-	}
-	//radio switch over
-	case RADIO_SWITCHING_OVER:
-		assert(msg == radioSwitchingOverTimer);
-		BasePhyLayer::finishRadioSwitching();
-		break;
-
-	//AirFrame
-	case AIR_FRAME:
-		BasePhyLayer::handleAirFrame(static_cast<AirFrame*>(msg));
-		break;
-
-	//ChannelSenseRequest
-	case CHANNEL_SENSE_REQUEST:
-		BasePhyLayer::handleChannelSenseRequest(msg);
-		break;
-
-	default:
-		break;
-	}
 }

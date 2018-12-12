@@ -21,6 +21,7 @@ import org.car2x.veins.base.modules.IBaseApplLayer;
 
 simple SimpleVlcApp like IBaseApplLayer{
     parameters:
+        @class(Veins::SimpleVlcApp);
         bool debug = default(false);
         int headerLength = default(0bit) @unit(bit); //header length of the application
         int packetByteLength @unit(byte);

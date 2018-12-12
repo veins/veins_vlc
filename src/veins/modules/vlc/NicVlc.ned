@@ -20,7 +20,6 @@
 package org.car2x.veins.modules.vlc;
 
 import org.car2x.veins.modules.vlc.PhyLayerVlc;
-import org.car2x.veins.modules.mac.ieee80211p.Mac1609_4;
 
 module NicVlc
 {

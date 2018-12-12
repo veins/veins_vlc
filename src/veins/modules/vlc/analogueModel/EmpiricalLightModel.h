@@ -18,12 +18,12 @@
 
 // Based on previous implementation from Hua-Yen Tseng
 
-#ifndef PER_MODEL_H
-#define PER_MODEL_H
+#pragma once
 
 #include <cassert>
 
-#include "veins/base/utils/MiXiMDefs.h"
+#include "veins/veins.h"
+
 #include "veins/base/phyLayer/AnalogueModel.h"
 #include "veins/modules/vlc/utility/ConstsVlc.h"
 #include "veins/modules/mobility/traci/TraCIMobility.h"
@@ -31,25 +31,30 @@
 #include "veins/modules/vlc/utility/Utils.h"
 
 using Veins::AirFrame;
-using Veins::TraCIMobility;
 using Veins::AnnotationManager;
 using Veins::AnnotationManagerAccess;
+using Veins::TraCIMobility;
 
-#define ELMDEBUG(word) if(debug) {std::cout << "\t\tELM: " << word << std::endl;}
+namespace Veins {
+
+#define ELMDEBUG(word)                                 \
+    if (debug) {                                       \
+        std::cout << "\t\tELM: " << word << std::endl; \
+    }
 
 /**
- * @brief This class returns the received power on the
+ * @brief This class returns the received power in dbm on the
  * receiving module, based on the empirical measurements
  * with taillight and headlight
  *
  * The values are recorded as observed from the spectrum analyzer
  * to which the PD is connected -- this is electrical power
  */
-class MIXIM_API EmpiricalLightModel : public AnalogueModel {
+class VEINS_API EmpiricalLightModel : public AnalogueModel {
 protected:
     AnnotationManager* annotations;
 
-    bool debug;
+    bool debug = true;
     double sensitivity_dbm;
     double headlightMaxTxRange;
     double taillightMaxTxRange;
@@ -57,36 +62,28 @@ protected:
     double taillightMaxTxAngle;
 
 public:
-	EmpiricalLightModel(bool debug, double rxSensitivity_dbm, double m_headlightMaxTxRange, double m_taillightMaxTxRange, double m_headlightMaxTxAngle, double m_taillightMaxTxAngle):
-	    debug(debug),
-	    sensitivity_dbm(rxSensitivity_dbm),
-	    headlightMaxTxRange(m_headlightMaxTxRange),
-	    taillightMaxTxRange(m_taillightMaxTxRange),
-	    headlightMaxTxAngle(m_headlightMaxTxAngle),
-	    taillightMaxTxAngle(m_taillightMaxTxAngle)
+    EmpiricalLightModel(double rxSensitivity_dbm, double m_headlightMaxTxRange, double m_taillightMaxTxRange, double m_headlightMaxTxAngle, double m_taillightMaxTxAngle)
+        : sensitivity_dbm(rxSensitivity_dbm)
+        , headlightMaxTxRange(m_headlightMaxTxRange)
+        , taillightMaxTxRange(m_taillightMaxTxRange)
+        , headlightMaxTxAngle(m_headlightMaxTxAngle)
+        , taillightMaxTxAngle(m_taillightMaxTxAngle)
     {
         // Transform degrees into radians
         headlightMaxTxAngle = deg2rad(headlightMaxTxAngle);
         taillightMaxTxAngle = deg2rad(taillightMaxTxAngle);
 
-        ELMDEBUG("\tEmpiricalLightModel() constructor called...")
-        ELMDEBUG("\trxSensitivity_dbm: " << sensitivity_dbm);
-        ELMDEBUG("\theadlightMaxTxRange: " << headlightMaxTxRange);
-        ELMDEBUG("\ttaillightMaxTxRange: " << taillightMaxTxRange);
-        ELMDEBUG("\theadlightMaxTxAngle: " << headlightMaxTxAngle);
-        ELMDEBUG("\ttaillightMaxTxAngle: " << taillightMaxTxAngle);
-
         annotations = AnnotationManagerAccess().getIfExists();
         ASSERT(annotations);
-	};
+    };
 
-	virtual void filterSignal(AirFrame *, const Coord&, const Coord&);
+    virtual void filterSignal(Signal* signal, const Coord&, const Coord&);
 
-	int getHeading(cModule* module);
+    int getHeading(cModule* module);
 
-	bool isRecvPowerUnderSensitivity(int senderHeading, double distanceFromSenderToReceiver, const Coord& vectorFromTx2Rx, const Coord& vectorTxHeading, const Coord& vectorRxHeading);
+    bool isRecvPowerUnderSensitivity(int senderHeading, double distanceFromSenderToReceiver, const Coord& vectorFromTx2Rx, const Coord& vectorTxHeading, const Coord& vectorRxHeading);
     double calcReceivedPower(int senderHeading, double distanceFromSenderToReceiver, const Coord& vectorFromTx2Rx, const Coord& vectorTxHeading, const Coord& vectorRxHeading);
     double calcFittedReceivedPower(double distanceFromSenderToReceiver, const Coord& vectorFromTx2Rx, const Coord& vectorTxHeading);
 };
 
-#endif
+} // namespace Veins

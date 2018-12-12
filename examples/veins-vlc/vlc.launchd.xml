@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!-- debug config -->
+<launch>
+    <copy file="vlc.net.xml" />
+    <copy file="vlc.rou.xml" />
+    <copy file="vlc.sumocfg" type="config" />
+    <copy file="vlc.gui.xml" />
+</launch>
+

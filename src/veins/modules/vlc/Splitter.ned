@@ -29,6 +29,7 @@ package org.car2x.veins.modules.vlc;
 
 simple Splitter{
     parameters:
+        @class(Veins::Splitter);
         bool debug = default(false);
         bool draw = default(false);
         bool collectStatistics = default(false);

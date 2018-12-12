@@ -18,88 +18,114 @@
 
 #include "veins/modules/vlc/utility/Utils.h"
 
-double traci2omnetAngle2(double angle){
-    // angle returned in radians
+using namespace Veins;
 
-    if (angle >= -M_PI && angle < 0) angle = -angle;
-    else if (angle >= 0 && angle <= M_PI) angle = 2*M_PI - angle;
-    else throw cRuntimeError("unexpected angle");
+namespace Veins {
 
-    return angle;
+double traci2myAngle(double angleRad)
+{
+    if (angleRad >= -M_PI && angleRad < 0)
+        angleRad = -angleRad;
+    else if (angleRad >= 0 && angleRad <= M_PI)
+        angleRad = 2 * M_PI - angleRad;
+    else
+        throw cRuntimeError("unexpected angle");
+
+    return angleRad;
 }
 
-double omnet2traciAngle2(double angle){
-    // angle returned in radians
+double myAngle2traci(double angleRad)
+{
+    if (angleRad > 0 && angleRad <= M_PI)
+        angleRad = -angleRad;
+    else if (angleRad > M_PI && angleRad <= 2 * M_PI)
+        angleRad = 2 * M_PI - angleRad;
+    else if (angleRad == 0)
+        angleRad = 0;
+    else
+        throw cRuntimeError("unexpected angle");
 
-    if (angle >= 0 && angle <= M_PI) angle = -angle;
-    else if (angle > M_PI && angle <= 2*M_PI) angle = 2*M_PI - angle;
-    else throw cRuntimeError("unexpected angle");
-
-    return angle;
+    return angleRad;
 }
 
-double reverseTraci(double angle){
+double reverseTraci(double angle)
+{
     // angle is in radians
 
     // no need to normalize because traci always returns between -180 and 180
-    if (angle < 0) angle += M_PI;
-    else if (angle >= 0) angle -= M_PI;
-    else throw cRuntimeError("unexpected angle");
+    if (angle < 0)
+        angle += M_PI;
+    else if (angle >= 0)
+        angle -= M_PI;
+    else
+        throw cRuntimeError("unexpected angle");
 
     return angle;
 }
 
-double rad2deg(double angleRad){
+double rad2deg(double angleRad)
+{
     return angleRad * 180.0 / M_PI;
 }
 
-double deg2rad(double angleDeg){
+double deg2rad(double angleDeg)
+{
     return angleDeg * M_PI / 180.0;
 }
 
-double traci2cartesianAngle(double angleRad){
+double traci2cartesianAngle(double angleRad)
+{
 
     double angle = angleRad;
 
-    if (angle >= -M_PI && angle < 0) angle += 2*M_PI;
-    else if (angle >= 0 && angle < M_PI) angle = angle;
-    else throw cRuntimeError("unexpected angle");
+    if (angle >= -M_PI && angle < 0)
+        angle += 2 * M_PI;
+    else if (angle >= 0 && angle < M_PI)
+        angle = angle;
+    else
+        throw cRuntimeError("unexpected angle");
 
     return angle;
 }
 
-double utilTrunc(double number){
+double utilTrunc(double number)
+{
     // keep only up to third decimal
-    return std::trunc(number * 1000.0)/1000.0;
+    return std::trunc(number * 1000.0) / 1000.0;
 }
 
 /*
  * same as FWMath::close(), except EPSILON
  */
-bool close(double one, double two){
-    return fabs(one-two)<0.0000001;
+bool close(double one, double two)
+{
+    return fabs(one - two) < 0.0000001;
 }
 
-double getOokBer(double snr){
+double getOokBer(double snr)
+{
     // Modelling OOK based on BPSK of NistErrorRate;
     // Assuming Q-func(sqrt(snr))
-    double z = std::sqrt (snr / 2.0);
-    double ber = 0.5 * erfc (z);
+    double z = std::sqrt(snr / 2.0);
+    double ber = 0.5 * erfc(z);
     return ber;
 
     // If BER is zero we can receive, else not.
-//    if (ber == 0.0)
-//        return 1.0;
-//    else
-//        return 0.0;
+    //    if (ber == 0.0)
+    //        return 1.0;
+    //    else
+    //        return 0.0;
 }
 
-double getOokPdr(double snr, int packetLength){
-    double ber = getOokBer (snr);
+double getOokPdr(double snr, int packetLength)
+{
+    double ber = getOokBer(snr);
 
-    if (ber == 0.0){
+    if (ber == 0.0) {
         return 1.0;
     }
 
-    return std::pow (1 - ber, (double)packetLength);
+    return std::pow(1 - ber, (double) packetLength);
 }
+
+} // namespace Veins

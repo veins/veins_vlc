@@ -20,10 +20,15 @@
 
 #include "veins/modules/application/traci/TraCIDemo11p.h"
 
-Define_Module(TraCIDemo11p);
+#include "veins/modules/application/traci/TraCIDemo11pMessage_m.h"
 
-void TraCIDemo11p::initialize(int stage) {
-    BaseWaveApplLayer::initialize(stage);
+using namespace Veins;
+
+Define_Module(Veins::TraCIDemo11p);
+
+void TraCIDemo11p::initialize(int stage)
+{
+    DemoBaseApplLayer::initialize(stage);
     if (stage == 0) {
         sentMessage = false;
         lastDroveAt = simTime();
@@ -31,71 +36,77 @@ void TraCIDemo11p::initialize(int stage) {
     }
 }
 
-void TraCIDemo11p::onWSA(WaveServiceAdvertisment* wsa) {
+void TraCIDemo11p::onWSA(DemoServiceAdvertisment* wsa)
+{
     if (currentSubscribedServiceId == -1) {
         mac->changeServiceChannel(wsa->getTargetChannel());
         currentSubscribedServiceId = wsa->getPsid();
-        if  (currentOfferedServiceId != wsa->getPsid()) {
+        if (currentOfferedServiceId != wsa->getPsid()) {
             stopService();
             startService((Channels::ChannelNumber) wsa->getTargetChannel(), wsa->getPsid(), "Mirrored Traffic Service");
         }
     }
 }
 
-void TraCIDemo11p::onWSM(WaveShortMessage* wsm) {
-    findHost()->getDisplayString().updateWith("r=16,green");
+void TraCIDemo11p::onWSM(BaseFrame1609_4* frame)
+{
+    TraCIDemo11pMessage* wsm = check_and_cast<TraCIDemo11pMessage*>(frame);
 
-    if (mobility->getRoadId()[0] != ':') traciVehicle->changeRoute(wsm->getWsmData(), 9999);
+    findHost()->getDisplayString().setTagArg("i", 1, "green");
+
+    if (mobility->getRoadId()[0] != ':') traciVehicle->changeRoute(wsm->getDemoData(), 9999);
     if (!sentMessage) {
         sentMessage = true;
-        //repeat the received traffic update once in 2 seconds plus some random delay
+        // repeat the received traffic update once in 2 seconds plus some random delay
         wsm->setSenderAddress(myId);
         wsm->setSerial(3);
-        scheduleAt(simTime() + 2 + uniform(0.01,0.2), wsm->dup());
+        scheduleAt(simTime() + 2 + uniform(0.01, 0.2), wsm->dup());
     }
 }
 
-void TraCIDemo11p::handleSelfMsg(cMessage* msg) {
-    if (WaveShortMessage* wsm = dynamic_cast<WaveShortMessage*>(msg)) {
-        //send this message on the service channel until the counter is 3 or higher.
-        //this code only runs when channel switching is enabled
+void TraCIDemo11p::handleSelfMsg(cMessage* msg)
+{
+    if (TraCIDemo11pMessage* wsm = dynamic_cast<TraCIDemo11pMessage*>(msg)) {
+        // send this message on the service channel until the counter is 3 or higher.
+        // this code only runs when channel switching is enabled
         sendDown(wsm->dup());
-        wsm->setSerial(wsm->getSerial() +1);
+        wsm->setSerial(wsm->getSerial() + 1);
         if (wsm->getSerial() >= 3) {
-            //stop service advertisements
+            // stop service advertisements
             stopService();
-            delete(wsm);
+            delete (wsm);
         }
         else {
-            scheduleAt(simTime()+1, wsm);
+            scheduleAt(simTime() + 1, wsm);
         }
     }
     else {
-        BaseWaveApplLayer::handleSelfMsg(msg);
+        DemoBaseApplLayer::handleSelfMsg(msg);
     }
 }
 
-void TraCIDemo11p::handlePositionUpdate(cObject* obj) {
-    BaseWaveApplLayer::handlePositionUpdate(obj);
+void TraCIDemo11p::handlePositionUpdate(cObject* obj)
+{
+    DemoBaseApplLayer::handlePositionUpdate(obj);
 
     // stopped for for at least 10s?
     if (mobility->getSpeed() < 1) {
         if (simTime() - lastDroveAt >= 10 && sentMessage == false) {
-            findHost()->getDisplayString().updateWith("r=16,red");
+            findHost()->getDisplayString().setTagArg("i", 1, "red");
             sentMessage = true;
 
-            WaveShortMessage* wsm = new WaveShortMessage();
+            TraCIDemo11pMessage* wsm = new TraCIDemo11pMessage();
             populateWSM(wsm);
-            wsm->setWsmData(mobility->getRoadId().c_str());
+            wsm->setDemoData(mobility->getRoadId().c_str());
 
-            //host is standing still due to crash
+            // host is standing still due to crash
             if (dataOnSch) {
                 startService(Channels::SCH2, 42, "Traffic Information Service");
-                //started service and server advertising, schedule message to self to send later
-                scheduleAt(computeAsynchronousSendingTime(1,type_SCH),wsm);
+                // started service and server advertising, schedule message to self to send later
+                scheduleAt(computeAsynchronousSendingTime(1, type_SCH), wsm);
             }
             else {
-                //send right away on CCH, because channel switching is disabled
+                // send right away on CCH, because channel switching is disabled
                 sendDown(wsm);
             }
         }

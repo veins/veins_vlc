@@ -16,31 +16,28 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __VEINS_SPLITTER_H_
-#define __VEINS_SPLITTER_H_
+#pragma once
 
 #include <omnetpp.h>
 
 #include "veins/modules/mobility/traci/TraCIMobility.h"
-#include "veins/modules/utility/timeoutManager/TimeoutObserver.h"
-#include "veins/modules/utility/timeoutManager/TimeoutManager.h"
+#include "veins/modules/utility/TimerManager.h"
 #include "veins/modules/world/annotations/AnnotationManager.h"
 
-using Veins::TraCIMobility;
+#include "veins/modules/vlc/PhyLayerVlc.h"
+
 using Veins::AnnotationManager;
 using Veins::AnnotationManagerAccess;
+using Veins::TraCIMobility;
 
-#define DRAW_CONES 1
+namespace Veins {
 
-#define SPOUT(word) if(debug) {std::cout << "Module: [" << getFullPath() <<"]: " << word << std::endl;}
-
-class Splitter : public cSimpleModule, public TimeoutObserver
-{
-  public:
+class Splitter : public cSimpleModule {
+public:
     Splitter();
     ~Splitter();
 
-  protected:
+protected:
     // Gates
     int toApplication;
     int fromApplication;
@@ -58,8 +55,9 @@ class Splitter : public cSimpleModule, public TimeoutObserver
     double headHalfAngle;
     double tailHalfAngle;
     TraCIMobility* mobility;
-    TimeoutManager* timeoutManager;
     AnnotationManager* annotationManager;
+    Veins::TimerManager timerManager{this};
+    std::vector<PhyLayerVlc*> vlcPhys;
 
     // Statistics
     int headlightPacketsSent = 0;
@@ -75,14 +73,12 @@ class Splitter : public cSimpleModule, public TimeoutObserver
     simsignal_t tailVlcDelaySignal;
 
     virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
+    virtual void handleMessage(cMessage* msg);
     virtual void finish();
-    void handleUpperMessage(cMessage *msg);
-    void handleLowerMessage(cMessage *msg);
+    void handleUpperMessage(cMessage* msg);
+    void handleLowerMessage(cMessage* msg);
 
-    virtual void onTimeout(std::string name, short int kind);
-
-    void drawCone(int length, double halfAngle, bool reverse=false);
+    void drawRayLine(Coord pos, int length, double halfAngle, bool reverse = false);
 };
 
-#endif
+} // namespace Veins

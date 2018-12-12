@@ -16,13 +16,14 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef CONSTSVLC_H_
-#define CONSTSVLC_H_
+#pragma once
+
+namespace Veins {
 
 /*
  * Reference power used for the Empirical Light Model
  */
-const int FIXED_REFERENCE_POWER_MW = 10; //unit mW; During empirical measurements 19W (?)
+const int FIXED_REFERENCE_POWER_MW = 10; // unit mW; During empirical measurements 19W (?)
 
 /*
  * Consts for distinguishing the heading of the sending module
@@ -32,6 +33,14 @@ const int FIXED_REFERENCE_POWER_MW = 10; //unit mW; During empirical measurement
  */
 const int HEAD = 1;
 const int TAIL = -1;
+
+/*
+ * Consts for distinguishing between the left and right headlight
+ * module in the Hella Light Model. Values solely serve as
+ * identifiers
+ */
+const int LEFT = 1;
+const int RIGHT = -1;
 
 /*
  * End-to-end span of a light module relative to the x-axis.
@@ -46,14 +55,14 @@ const int TAIL_MAX_X_SPAN = 20;
  * see: IEEE Std 802.15.7-2011, Section 4.4.1.1, Section 8.6, Fig 124
  *
  */
-const double PHY_VLC_SHR = 124;    //bits; Minimum allowed length
+const double PHY_VLC_SHR = 124; // bits; Minimum allowed length
 
 /*
  * @brief Bitlength of the phy header.
  * It consists of PHR, HCS and optional fields.
  * see: IEEE Std 802.15.7-2011, Section 8.6, Fig 124
  */
-const double PHY_VLC_HEADER = 32 + 26 + 0;    //bits; Minimum possible length
+const double PHY_VLC_HEADER = 32 + 26 + 0; // bits; Minimum possible length
 
 // XXX: the values below are not used
 /*
@@ -64,14 +73,15 @@ const double PHY_VLC_HEADER = 32 + 26 + 0;    //bits; Minimum possible length
  * If MHR is modeled in the MAC, its size should be substracted from PSDU, because
  * the PSDU includes the MHR in the standard.
  */
-const double PHY_VLC_PSDU = 1023;    //bits; Minimum possible length based on PHYs
+const double PHY_VLC_PSDU = 1023; // bits; Minimum possible length based on PHYs
 
 /*
  * @brief The Mac header (MHR).
  * According to Figure 44 from IEEE Std 802.15.7-2011 the value
  * ranges between [3, 34] octets. Here we choose 21 arbitrarily
  */
-const double PHY_VLC_MHR = 21*8;    //168
+const double PHY_VLC_MHR = 21 * 8; // 168
 
 // SHR, HEADER and PSDU form the Phy layer data unit (PPDU)
-#endif /* CONSTSVLC_H_ */
+
+} // namespace Veins

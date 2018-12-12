@@ -23,15 +23,19 @@ import org.car2x.veins.base.phyLayer.BasePhyLayer;
 simple PhyLayerVlc extends BasePhyLayer
 {
     parameters:
-        @class(PhyLayerVlc);
+        @class(Veins::PhyLayerVlc);
+        antennaOffsetZ;
         //enables/disables collection of statistics about collision. notice that
         //enabling this feature increases simulation time
         bool collectCollisionStatistics = default(false);
         
-        bool debug; // for the vlc phy
-        bool deciderDebug;	// for the vlc decider
         double txPower @unit(mW);
         double bitrate @unit(bps);
-        double centerFrequency @unit(Hz);
-        double bandwidth @unit(Hz);
+
+    // Specifics for LsvLightModel
+    double photoDiodeGroundOffsetZ @unit("m"); // Given relative to ground
+    double interModuleDistance @unit("m"); //dist between left and right light module
+    string radiationPatternId;
+    string photoDiodeId;
+
 }

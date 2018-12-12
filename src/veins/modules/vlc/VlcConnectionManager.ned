@@ -23,6 +23,7 @@ package org.car2x.veins.modules.vlc;
 simple VlcConnectionManager
 {
     parameters:
+        @class(Veins::VlcConnectionManager);
         // debug switch for core framework
         bool coreDebug = default(false);
         // send directly to the node or create separate gates for every connection

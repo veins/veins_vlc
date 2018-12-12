@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <AnalogueModels>
+        <AnalogueModel type="LsvLightModel" thresholding="true">
+            <parameter name="radiationPatternFile" type="string" value="radiationPatterns.txt"/>
+            <parameter name="photoDiodeFile" type="string" value="photoDiodes.txt"/>
+        </AnalogueModel>
+
+        <AnalogueModel type="VehicleObstacleShadowingForVlc" thresholding="false">
+            <parameter name="carrierFrequency" type="double" value="666e12"/>
+        </AnalogueModel>
+    </AnalogueModels>
+    <Decider type="DeciderVlc">
+        <!-- The center frequency on which the phy listens-->
+        <parameter name="centerFrequency" type="double" value="666e12"/>
+    </Decider>
+</root>

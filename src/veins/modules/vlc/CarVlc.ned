@@ -22,7 +22,6 @@
 package org.car2x.veins.modules.vlc;
 
 import org.car2x.veins.base.modules.*;
-import org.car2x.veins.modules.utility.timeoutManager.*;
 import org.car2x.veins.modules.vlc.NicVlc;
 import org.car2x.veins.modules.vlc.Splitter;
 
@@ -51,10 +50,6 @@ module CarVlc
         veinsmobility: <veinsmobilityType> like org.car2x.veins.base.modules.IMobility {
             parameters:
                 @display("p=368,127;i=block/cogwheel");
-        }
-
-        timeoutManager: TimeoutManager {
-            @display("p=368,50;i=block/timer");
         }
 
         nicVlcHead: NicVlc {
