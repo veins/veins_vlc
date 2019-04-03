@@ -118,7 +118,6 @@ VlcMessage* SimpleVlcApp::generateVlcMessage(int accessTechnology, int sendingMo
     vlcMsg->setDestinationNode("BROADCAST");
     vlcMsg->setAccessTechnology(accessTechnology);
     vlcMsg->setTransmissionModule(sendingModule);
-    vlcMsg->setSentAt(simTime()); // There is timestamp field in WSM too
 
     // Set application layer packet length
     vlcMsg->setByteLength(byteLength);

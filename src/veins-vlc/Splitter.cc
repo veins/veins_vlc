@@ -186,16 +186,16 @@ void Splitter::handleLowerMessage(cMessage* msg)
         vlcPacketsReceived++;
         VlcMessage* vlcMsg = dynamic_cast<VlcMessage*>(msg);
 
-        emit(totalVlcDelaySignal, simTime() - vlcMsg->getSentAt());
+        emit(totalVlcDelaySignal, simTime() - vlcMsg->getCreationTime());
 
         int srclightModule = vlcMsg->getTransmissionModule();
         if (srclightModule == HEADLIGHT) {
             headlightPacketsReceived++;
-            emit(headVlcDelaySignal, simTime() - vlcMsg->getSentAt());
+            emit(headVlcDelaySignal, simTime() - vlcMsg->getCreationTime());
         }
         else if (srclightModule == TAILLIGHT) {
             taillightPacketsReceived++;
-            emit(tailVlcDelaySignal, simTime() - vlcMsg->getSentAt());
+            emit(tailVlcDelaySignal, simTime() - vlcMsg->getCreationTime());
         }
         else
             error("neither `head` nor `tail`");

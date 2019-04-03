@@ -37,5 +37,4 @@ message VlcMessage extends veins::BaseFrame1609_4 {
 	string destinationNode;		
 	int accessTechnology;
 	int transmissionModule;	// Tell the middle layer which transmission module to use
-	simtime_t sentAt;
 }
