@@ -107,12 +107,12 @@ void Splitter::handleUpperMessage(cMessage* msg)
         BaseFrame1609_4* wsm = dynamic_cast<BaseFrame1609_4*>(msg);
 
         // If not a VlcMessage check whether it is a WSM to send directly
-        if (wsm != NULL && !strcmp(msg->getClassName(), "WaveShortMessage")) {
+        if (wsm) {
             send(wsm, toDsrcNic);
             return;
         }
         else
-            error("Not a VlcMessage, not WaveShortMessage");
+            error("Not a VlcMessage, not BaseFrame1609_4");
     }
 
     // if (vlcMsg)...
