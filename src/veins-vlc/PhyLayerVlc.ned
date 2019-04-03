@@ -30,7 +30,7 @@ simple PhyLayerVlc extends BasePhyLayer
         //enabling this feature increases simulation time
         bool collectCollisionStatistics = default(false);
         
-        double txPower @unit(mW);
+        double txPower @unit(mW) = default(10mW);
         double bitrate @unit(bps);
 
         // Parameters for LsvLightModel
