@@ -20,21 +20,12 @@
 
 cplusplus {{
 #include "veins/modules/messages/BaseFrame1609_4_m.h"
-
-#define VLC 30
-#define DSRC 31
-
-#define	DONT_CARE 310
-#define HEADLIGHT 311
-#define TAILLIGHT 312
-#define BOTH_LIGHTS 313	// Middleware will create two copies of the same message; One sent via HEADLIGHT, one sent via TAILLIGHT.   
 }}
 
-class veins::BaseFrame1609_4;	
+class veins::BaseFrame1609_4;   
 
 message VlcMessage extends veins::BaseFrame1609_4 {
-	string sourceNode;
-	string destinationNode;		
-	int accessTechnology;
-	int transmissionModule;	// Tell the middle layer which transmission module to use
+    string sourceNode;
+    string destinationNode;     
+    int accessTechnology;
 }

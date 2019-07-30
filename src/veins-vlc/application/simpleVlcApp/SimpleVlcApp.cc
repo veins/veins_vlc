@@ -20,6 +20,7 @@
 
 #include <omnetpp.h>
 #include <veins-vlc/application/simpleVlcApp/SimpleVlcApp.h>
+#include "veins-vlc/Splitter.h"
 
 using namespace veins;
 
@@ -61,13 +62,13 @@ void SimpleVlcApp::initialize(int stage)
     if (stage == 3) {
         auto dsrc = [this]() {
             VlcMessage* vlcMsg = new VlcMessage();
-            vlcMsg->setAccessTechnology(DSRC);
+            vlcMsg->setAccessTechnology(Splitter::Interfaces(Splitter::Interface::dsrc).to_ulong());
             send(vlcMsg, toLower);
         };
-        int vlcModule = BOTH_LIGHTS;
+        const Splitter::Interfaces vlcModule{Splitter::Interface::vlc_head, Splitter::Interface::vlc_head};
         auto vlc = [this, vlcModule]() {
-            EV_INFO << "Sending VLC message of type: " << vlcModule << std::endl;
-            VlcMessage* vlcMsg = generateVlcMessage(VLC, vlcModule);
+            EV_INFO << "Sending VLC message of type: " << vlcModule.to_ulong() << std::endl;
+            VlcMessage* vlcMsg = generateVlcMessage(vlcModule.to_ulong());
             send(vlcMsg, toLower);
         };
         timerManager.create(veins::TimerSpecification(vlc).oneshotAt(SimTime(20, SIMTIME_S)));
@@ -85,26 +86,22 @@ void SimpleVlcApp::handleMessage(cMessage* msg)
     }
     else {
         VlcMessage* vlcMsg = check_and_cast<VlcMessage*>(msg);
-        int accessTech = vlcMsg->getAccessTechnology();
-        switch (accessTech) {
-        case DSRC: {
+        Splitter::Interfaces accessTechnology(vlcMsg->getAccessTechnology());
+        if (accessTechnology.test(Splitter::Interface::dsrc)) {
             EV_INFO << "DSRC message received!" << std::endl;
-            delete vlcMsg;
-            break;
         }
-        case VLC: {
+        else if (accessTechnology.test(Splitter::Interface::vlc_head)) {
             EV_INFO << "VLC message received from: " << vlcMsg->getSourceNode() << std::endl;
-            delete vlcMsg;
-            break;
         }
-        default:
-            error("message neither from DSRC nor VLC");
-            break;
-        }
+        else if (accessTechnology.test(Splitter::Interface::vlc_tail)) {
+            EV_INFO << "VLC message received from: " << vlcMsg->getSourceNode() << std::endl;
+        } 
+
+        delete vlcMsg;
     }
 }
 
-VlcMessage* SimpleVlcApp::generateVlcMessage(int accessTechnology, int sendingModule)
+VlcMessage* SimpleVlcApp::generateVlcMessage(int accessTechnology)
 {
     VlcMessage* vlcMsg = new VlcMessage();
 
@@ -117,7 +114,6 @@ VlcMessage* SimpleVlcApp::generateVlcMessage(int accessTechnology, int sendingMo
     vlcMsg->setSourceNode(this->sumoId.c_str());
     vlcMsg->setDestinationNode("BROADCAST");
     vlcMsg->setAccessTechnology(accessTechnology);
-    vlcMsg->setTransmissionModule(sendingModule);
 
     // Set application layer packet length
     vlcMsg->setByteLength(byteLength);

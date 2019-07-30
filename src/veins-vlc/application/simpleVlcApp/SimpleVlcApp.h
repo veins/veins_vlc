@@ -66,7 +66,7 @@ public:
     }
 
 protected:
-    VlcMessage* generateVlcMessage(int accessTechnology, int sendingModule);
+    VlcMessage* generateVlcMessage(int accessTechnology);
 };
 
 } // namespace veins
