@@ -26,16 +26,6 @@ using namespace veins;
 
 Define_Module(veins::Splitter);
 
-Splitter::Splitter()
-    : annotationManager(NULL)
-
-{
-}
-
-Splitter::~Splitter()
-{
-}
-
 void Splitter::initialize()
 {
     // From upper layers --> lower layers

@@ -36,8 +36,8 @@ namespace veins {
 
 class Splitter : public cSimpleModule {
 public:
-    Splitter();
-    ~Splitter();
+    Splitter() {}
+    ~Splitter() {}
 
 protected:
     // Gates
@@ -56,8 +56,8 @@ protected:
     bool draw;
     double headHalfAngle;
     double tailHalfAngle;
-    TraCIMobility* mobility;
-    AnnotationManager* annotationManager;
+    TraCIMobility* mobility = nullptr;
+    AnnotationManager* annotationManager = nullptr;
     veins::TimerManager timerManager{this};
     std::vector<PhyLayerVlc*> vlcPhys;
 
