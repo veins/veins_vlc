@@ -87,6 +87,7 @@ protected:
     virtual void finish();
     void handleUpperMessage(cMessage* msg);
     void handleLowerMessage(cMessage* msg);
+    virtual Interfaces getAccessTechnology(cPacket *msg);
 
     void drawRayLine(const AntennaPosition& ap, int length, double halfAngle, bool reverse = false);
 };

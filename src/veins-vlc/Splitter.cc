@@ -23,6 +23,7 @@
 #include "veins-vlc/utility/Utils.h"
 
 using namespace veins;
+using std::unique_ptr;
 
 Define_Module(veins::Splitter);
 
@@ -89,21 +90,12 @@ void Splitter::handleMessage(cMessage* msg)
 
 void Splitter::handleUpperMessage(cMessage* msg)
 {
-    // Cast the message to a subclass
-    VlcMessage* vlcMsg = dynamic_cast<VlcMessage*>(msg);
+    unique_ptr<BaseFrame1609_4> wsm(check_and_cast<BaseFrame1609_4*>(msg));
+    const auto accessTechnology = getAccessTechnology(wsm.get());
 
-    // Handle WSMs if the VLC has to be "retrofitted" to non-VLC app
-    if (!vlcMsg) {
-        BaseFrame1609_4* wsm = check_and_cast<BaseFrame1609_4*>(msg);
-        send(wsm, toDsrcNic);
-        return;
-    }
-
-    // if (vlcMsg)...
-    const auto accessTechnology = static_cast<Splitter::Interfaces>(vlcMsg->getAccessTechnology());
     if (accessTechnology.test(Splitter::Interface::dsrc)) {
         EV_INFO << "DSRC message received from upper layer!" << std::endl;
-        send(vlcMsg->dup(), toDsrcNic);
+        send(wsm->dup(), toDsrcNic);
     }
     if (accessTechnology.test(Splitter::Interface::vlc_head)) {
         EV_INFO << "VLC head message received from upper layer!" << std::endl;
@@ -121,7 +113,7 @@ void Splitter::handleUpperMessage(cMessage* msg)
         }
         headlightPacketsSent += 1;
         vlcPacketsSent += 1;
-        send(vlcMsg->dup(), toVlcHead);
+        send(wsm->dup(), toVlcHead);
     }
     if (accessTechnology.test(Splitter::Interface::vlc_tail)) {
         EV_INFO << "VLC tail message received from upper layer!" << std::endl;
@@ -138,10 +130,8 @@ void Splitter::handleUpperMessage(cMessage* msg)
 
         taillightPacketsSent += 1;
         vlcPacketsSent += 1;
-        send(vlcMsg->dup(), toVlcTail);
+        send(wsm->dup(), toVlcTail);
     }
-
-    delete msg;
 }
 
 void Splitter::handleLowerMessage(cMessage* msg)
@@ -170,6 +160,16 @@ void Splitter::handleLowerMessage(cMessage* msg)
     }
 
     send(msg, toApplication);
+}
+
+Splitter::Interfaces Splitter::getAccessTechnology(cPacket *msg) {
+    if (VlcMessage* vlcMsg = dynamic_cast<VlcMessage*>(msg)) {
+        return Interfaces(vlcMsg->getAccessTechnology());
+    }
+    else {
+        return Interface::dsrc;  // fallback for non-vlc-messages
+    }
+
 }
 
 void Splitter::drawRayLine(const AntennaPosition& ap, int length, double halfAngle, bool reverse)
