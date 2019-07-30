@@ -37,7 +37,7 @@ namespace veins {
 class Splitter : public cSimpleModule {
 public:
     Splitter() {}
-    ~Splitter() {}
+    virtual ~Splitter() {}
 
 protected:
     // Gates
