@@ -54,8 +54,7 @@ void Splitter::initialize()
     tailVlcDelaySignal = registerSignal("tailVlcDelay");
 
     // Other simulation modules
-    cModule* tmpMobility = getParentModule()->getSubmodule("veinsmobility");
-    mobility = dynamic_cast<TraCIMobility*>(tmpMobility);
+    mobility = FindModule<TraCIMobility*>::findSubModule(getParentModule());
     ASSERT(mobility);
 
     vlcPhys = getSubmodulesOfType<PhyLayerVlc>(getParentModule(), true);
