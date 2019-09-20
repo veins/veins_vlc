@@ -7,9 +7,8 @@
 			<parameter name="headlightMaxTxAngle" type="double" value="45"/>
 			<parameter name="taillightMaxTxAngle" type="double" value="60"/>
 		</AnalogueModel>
-		<AnalogueModel type="VehicleObstacleShadowingForVlc">
-			<parameter name="carrierFrequency" type="double" value="666e12"/>
-		</AnalogueModel>
+        <AnalogueModel type="VehicleObstacleShadowingForVlc" thresholding="false">
+        </AnalogueModel>
 	</AnalogueModels>
 	<Decider type="DeciderVlc">
 		<!-- The center frequency on which the phy listens-->

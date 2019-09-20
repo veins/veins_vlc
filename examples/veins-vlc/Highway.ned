@@ -3,6 +3,8 @@
 //
 // Documentation for these modules is at http://veins.car2x.org/
 //
+// SPDX-License-Identifier: GPL-2.0-or-later
+//
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 2 of the License, or
@@ -24,8 +26,8 @@ import org.car2x.veins.base.modules.BaseWorldUtility;
 import org.car2x.veins.modules.mobility.traci.TraCIScenarioManager*;
 import org.car2x.veins.modules.obstacle.ObstacleControl;
 import org.car2x.veins.modules.obstacle.VehicleObstacleControl;
-import org.car2x.veins.modules.vlc.CarVlcMobility;
-import org.car2x.veins.modules.vlc.VlcConnectionManager;
+import org.car2x.veinsvlc.CarVlcMobility;
+import org.car2x.veinsvlc.VlcConnectionManager;
 import org.car2x.veins.modules.world.annotations.AnnotationManager;
 
 

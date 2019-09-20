@@ -3,6 +3,7 @@
 	<name>veins-vlc</name>
 	<comment></comment>
 	<projects>
+		<project>veins</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
