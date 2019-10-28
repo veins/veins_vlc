@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2006-2017 Agon Memedi <memedi@ccs-labs.org>
+// Copyright (C) 2017 Agon Memedi <memedi@ccs-labs.org>
 //
 // SPDX-License-Identifier: GPL-2.0-or-later
 //

@@ -1,7 +1,5 @@
 //
-// Copyright (C) 2018-2018 Agon Memedi <memedi@ccs-labs.org>
-//
-// Documentation for these modules is at http://veins.car2x.org/
+// Copyright (C) 2018 Agon Memedi <memedi@ccs-labs.org>
 //
 // SPDX-License-Identifier: GPL-2.0-or-later
 //

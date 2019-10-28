@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019 Agon Memedi <memedi@ccs-labs.org>
+// Copyright (C) 2019 Max Schettler <schettler@ccs-labs.org>
 //
 // SPDX-License-Identifier: GPL-2.0-or-later
 //

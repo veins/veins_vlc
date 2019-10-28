@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2018-2018 Julien Jahneke <julien.jahneke@ccs-labs.org>
+// Copyright (C) 2018 Julien Jahneke <julien.jahneke@ccs-labs.org>
 //
 // SPDX-License-Identifier: GPL-2.0-or-later
 //
