@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2008 Christoph Sommer <christoph.sommer@informatik.uni-erlangen.de>
+// Copyright (C) 2019 Agon Memedi <memedi@ccs-labs.org>
 //
 // Documentation for these modules is at http://veins.car2x.org/
 //
@@ -31,7 +31,7 @@ import org.car2x.veinsvlc.VlcConnectionManager;
 import org.car2x.veins.modules.world.annotations.AnnotationManager;
 
 
-module Highway
+module Scenario
 {
     parameters:
         double playgroundSizeX @unit(m); // x size of the area the nodes are in (in meters)
@@ -48,7 +48,7 @@ module Highway
             @display("p=349,206");
         }
         obstacles: ObstacleControl {
-            @display("p=261,35");
+            @display("p=390,35");
         }
         vehicleObstacles: VehicleObstacleControl {
             @display("p=261,35");
