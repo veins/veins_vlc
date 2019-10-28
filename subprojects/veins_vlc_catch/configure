@@ -53,10 +53,21 @@ run_lib_paths = []
 
 # Add flags for Veins VLC
 if options.veins_vlc:
-    check_fname = os.path.join(options.veins_vlc, 'src/veins-vlc/package.ned')
-    expect_version = '1.0'
-    if not os.path.isfile(check_fname):
-        error('Could not find Veins VLC (by looking for %s). Check the path to Veins VLC (--with-veins-vlc=... option) and the Veins VLC version (should be version %s)' % (check_fname, expect_version))
+    fname = os.path.join(options.veins_vlc, 'print-veins_vlc-version')
+    expect_version = ['1.0']
+    try:
+        print 'Running "%s" to determine Veins VLC version.' % fname
+        version = subprocess.check_output(['env', fname]).strip()
+        if not version in expect_version:
+            print ''
+            print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+            warning('Unsupported Veins VLC Version. Expecting %s, found "%s"' % (' or '.join(expect_version), version))
+            print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+            print ''
+        else:
+            print 'Found Veins VLC version "%s". Okay.' % version
+    except subprocess.CalledProcessError as e:
+        error('Could not determine Veins VLC Version (by running %s): %s. Check the path to Veins VLC (--with-veins-vlc=... option) and the Veins VLC version (should be version %s)' % (fname, e, ' or '.join(expect_version)))
         sys.exit(1)
 
     veins_vlc_header_dirs = [os.path.join(os.path.relpath(options.veins_vlc, 'src'), 'src')]
@@ -65,15 +76,26 @@ if options.veins_vlc:
     veins_vlc_defs = []
 
     makemake_flags += veins_vlc_includes + veins_vlc_link + veins_vlc_defs
-    run_lib_paths = [os.path.relpath(os.path.join(options.veins_vlc, 'src', 'veins-vlc'))] + run_lib_paths
+    run_lib_paths = [os.path.relpath(os.path.join(options.veins_vlc, 'src'))] + run_lib_paths
 
 
 # Add flags for Veins
 if options.veins:
-    check_fname = os.path.join(options.veins, 'src/veins/package.ned')
-    expect_version = '5.0'
-    if not os.path.isfile(check_fname):
-        error('Could not find Veins (by looking for %s). Check the path to Veins (--with-veins=... option) and the Veins version (should be version %s)' % (check_fname, expect_version))
+    fname = os.path.join(options.veins, 'print-veins-version')
+    expect_version = ['5.0']
+    try:
+        print 'Running "%s" to determine Veins version.' % fname
+        version = subprocess.check_output(['env', fname]).strip()
+        if not version in expect_version:
+            print ''
+            print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+            warning('Unsupported Veins Version. Expecting %s, found "%s"' % (' or '.join(expect_version), version))
+            print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+            print ''
+        else:
+            print 'Found Veins version "%s". Okay.' % version
+    except subprocess.CalledProcessError as e:
+        error('Could not determine Veins Version (by running %s): %s. Check the path to Veins (--with-veins=... option) and the Veins version (should be version %s)' % (fname, e, ' or '.join(expect_version)))
         sys.exit(1)
 
     veins_header_dirs = [os.path.join(os.path.relpath(options.veins, 'src'), 'src')]
@@ -82,7 +104,7 @@ if options.veins:
     veins_defs = []
 
     makemake_flags += veins_includes + veins_link + veins_defs
-    run_lib_paths = [os.path.relpath(os.path.join(options.veins, 'src', 'veins'))] + run_lib_paths
+    run_lib_paths = [os.path.relpath(os.path.join(options.veins, 'src'))] + run_lib_paths
 
 
 # Start creating files
