@@ -28,7 +28,7 @@
 #define VEINS_VLC_VERSION_MAJOR 1
 #define VEINS_VLC_VERSION_MINOR 0
 #define VEINS_VLC_VERSION_PATCH 0
-#define VEINS_VLC_VERSION_ALPHA 1
+#define VEINS_VLC_VERSION_ALPHA 0
 
 // Explicitly check Veins version number
 #if !(VEINS_VERSION_MAJOR == 5 && VEINS_VERSION_MINOR >= 0)

@@ -54,7 +54,7 @@ run_lib_paths = []
 # Add flags for Veins VLC
 if options.veins_vlc:
     check_fname = os.path.join(options.veins_vlc, 'src/veins-vlc/package.ned')
-    expect_version = '0.4'
+    expect_version = '1.0'
     if not os.path.isfile(check_fname):
         error('Could not find Veins VLC (by looking for %s). Check the path to Veins VLC (--with-veins-vlc=... option) and the Veins VLC version (should be version %s)' % (check_fname, expect_version))
         sys.exit(1)
@@ -71,7 +71,7 @@ if options.veins_vlc:
 # Add flags for Veins
 if options.veins:
     check_fname = os.path.join(options.veins, 'src/veins/package.ned')
-    expect_version = '4'
+    expect_version = '5.0'
     if not os.path.isfile(check_fname):
         error('Could not find Veins (by looking for %s). Check the path to Veins (--with-veins=... option) and the Veins version (should be version %s)' % (check_fname, expect_version))
         sys.exit(1)
