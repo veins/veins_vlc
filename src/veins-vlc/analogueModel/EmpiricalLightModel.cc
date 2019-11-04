@@ -2108,7 +2108,7 @@ void EmpiricalLightModel::filterSignal(Signal* signal)
     }
     case TAIL: {
         bool inTxRange = tx2RxDistance <= taillightMaxTxRange;
-        bool inTxFov = ((receiverPos2D - senderPos2D) / cos(headlightMaxTxAngle)) * txHeadingVector >= tx2RxDistance;
+        bool inTxFov = ((receiverPos2D - senderPos2D) / cos(taillightMaxTxAngle)) * txHeadingVector >= tx2RxDistance;
         bool inTxBearing = cosIncidenceAngle < 0;
 
         // Debug messages
