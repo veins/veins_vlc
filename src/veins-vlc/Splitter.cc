@@ -199,6 +199,12 @@ void Splitter::handleLowerMessage(cMessage* msg)
         }
         else
             error("neither `head` nor `tail`");
+
+    }
+
+    if (VlcMessage* vlcMsg = dynamic_cast<VlcMessage*>(msg)) {
+        if (lowerGate == fromVlcHead) vlcMsg->setTransmissionModule(HEADLIGHT);
+        if (lowerGate == fromVlcTail) vlcMsg->setTransmissionModule(TAILLIGHT);
     }
 
     send(msg, toApplication);
