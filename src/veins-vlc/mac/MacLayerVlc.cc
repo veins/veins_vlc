@@ -51,23 +51,22 @@ void MacLayerVlc::handleUpperMsg(cMessage* msg)
     EV_TRACE << "Received a message from upper layer" << std::endl;
     ASSERT(dynamic_cast<cPacket*>(msg));
 
-    sendDown(encapsMsg(check_and_cast<cPacket*>(msg)));
-
-    // if (transmitting) {
-    //    enqueuePacket(check_and_cast<cPacket*>(msg));
-    // }
-    // else {
-    //    sendDown(encapsMsg(check_and_cast<cPacket*>(msg)));
-    //    transmitting = true;
-    // }
+    if (transmitting) {
+        enqueuePacket(check_and_cast<cPacket*>(msg));
+    }
+    else {
+        if (!queue.isEmpty()) throw cRuntimeError("Radio not transmitting but packets in queue");
+        sendDown(encapsMsg(check_and_cast<cPacket*>(msg)));
+        transmitting = true;
+    }
 }
 
 void MacLayerVlc::handleLowerControl(cMessage* msg)
 {
     switch (msg->getKind()) {
     case MacToPhyInterface::TX_OVER:
-        // transmitting = false;
-        // transmissionOpportunity();
+        transmitting = false;
+        transmissionOpportunity();
         delete msg;
         break;
     default:
