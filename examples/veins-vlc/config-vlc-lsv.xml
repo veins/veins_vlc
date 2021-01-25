@@ -33,7 +33,7 @@
     <AnalogueModels>
         <AnalogueModel type="LsvLightModel" thresholding="true">
             <parameter name="radiationPatternFile" type="string" value="radiationPatterns.txt"/>
-            <parameter name="photodiodeFile" type="string" value="photodiodes.txt"/>
+            <parameter name="photodiodeFile" type="string" value="photoDiodes.txt"/>
         </AnalogueModel>
         <AnalogueModel type="VehicleObstacleShadowingForVlc" thresholding="false">
         </AnalogueModel>
