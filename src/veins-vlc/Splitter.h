@@ -23,6 +23,7 @@
 #include <omnetpp.h>
 
 #include "veins/modules/mobility/traci/TraCIMobility.h"
+#include "veins/base/utils/EnumBitset.h"
 #include "veins/modules/utility/TimerManager.h"
 #include "veins/modules/world/annotations/AnnotationManager.h"
 
@@ -36,8 +37,15 @@ namespace veins {
 
 class Splitter : public cSimpleModule {
 public:
-    Splitter();
-    ~Splitter();
+    enum class Interface : uint32_t {
+        dsrc,
+        vlc_head,
+        vlc_tail
+    };
+    using Interfaces = veins::EnumBitset<Interface>;
+
+    Splitter() {}
+    virtual ~Splitter() {}
 
 protected:
     // Gates
@@ -56,8 +64,8 @@ protected:
     bool draw;
     double headHalfAngle;
     double tailHalfAngle;
-    TraCIMobility* mobility;
-    AnnotationManager* annotationManager;
+    TraCIMobility* mobility = nullptr;
+    AnnotationManager* annotationManager = nullptr;
     veins::TimerManager timerManager{this};
     std::vector<PhyLayerVlc*> vlcPhys;
 
@@ -79,8 +87,14 @@ protected:
     virtual void finish();
     void handleUpperMessage(cMessage* msg);
     void handleLowerMessage(cMessage* msg);
+    virtual Interfaces getAccessTechnology(cPacket *msg);
 
     void drawRayLine(const AntennaPosition& ap, int length, double halfAngle, bool reverse = false);
+};
+
+template <>
+struct EnumTraits<Splitter::Interface> {
+    static const Splitter::Interface max = Splitter::Interface::vlc_tail;
 };
 
 } // namespace veins

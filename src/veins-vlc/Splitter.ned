@@ -26,10 +26,10 @@
 // For the messages coming from the lower layer NICs, it just sends the
 // message to the application; it is the taks of the application to
 // figure out if the message is a WSM or a VLC Message, in case of need
-		
+        
 package org.car2x.veinsvlc;
 
-simple Splitter{
+simple Splitter like ISplitter {
     parameters:
         @class(veins::Splitter);
         bool debug = default(false);
@@ -38,7 +38,7 @@ simple Splitter{
         double drawHeadHalfAngle = default(0) @unit(deg);
         double drawTailHalfAngle = default(0) @unit(deg);
         
-      	@signal[totalVlcDelay](type="simtime_t");
+        @signal[totalVlcDelay](type="simtime_t");
         @statistic[totalVlcDelay](record=mean);
         
         @signal[headVlcDelay](type="simtime_t");
@@ -48,15 +48,15 @@ simple Splitter{
         @statistic[tailVlcDelay](record=mean);
           
     gates:
-        output applicationOut;	// output gate towards the application
-        input applicationIn;	// input gate from the application
+        output applicationOut;  // output gate towards the application
+        input applicationIn;    // input gate from the application
         
-        output nicOut;	// output gate towards the 802.11p NIC
-        input nicIn;	// input gate from the 802.11p NIC
+        output nicOut;  // output gate towards the 802.11p NIC
+        input nicIn;    // input gate from the 802.11p NIC
         
-        output nicVlcHeadOut;	// output gate towards the HeadLight
-        input nicVlcHeadIn;		// input gate from the HeadLight
+        output nicVlcHeadOut;   // output gate towards the HeadLight
+        input nicVlcHeadIn;     // input gate from the HeadLight
         
-        output nicVlcTailOut;	// output gate towards the TailLight
-        input nicVlcTailIn;		// input gate from the TailLight
+        output nicVlcTailOut;   // output gate towards the TailLight
+        input nicVlcTailIn;     // input gate from the TailLight
 }

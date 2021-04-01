@@ -1,7 +1,5 @@
 //
-// Copyright (C) 2017 Agon Memedi <memedi@ccs-labs.org>
-//
-// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (C) 2006-2017 Agon Memedi <memedi@ccs-labs.org>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,14 +16,19 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-cplusplus {{
-#include "veins/modules/messages/BaseFrame1609_4_m.h"
-}}
+package org.car2x.veinsvlc;
 
-class veins::BaseFrame1609_4;   
-
-message VlcMessage extends veins::BaseFrame1609_4 {
-    string sourceNode;
-    string destinationNode;     
-    int accessTechnology;
+moduleinterface ISplitter {
+    gates:
+        output applicationOut;  // output gate towards the application
+        input applicationIn;    // input gate from the application
+        
+        output nicOut;  // output gate towards the 802.11p NIC
+        input nicIn;    // input gate from the 802.11p NIC
+        
+        output nicVlcHeadOut;   // output gate towards the HeadLight
+        input nicVlcHeadIn;     // input gate from the HeadLight
+        
+        output nicVlcTailOut;   // output gate towards the TailLight
+        input nicVlcTailIn;     // input gate from the TailLight
 }

@@ -23,18 +23,9 @@
 #include "veins-vlc/utility/Utils.h"
 
 using namespace veins;
+using std::unique_ptr;
 
 Define_Module(veins::Splitter);
-
-Splitter::Splitter()
-    : annotationManager(NULL)
-
-{
-}
-
-Splitter::~Splitter()
-{
-}
 
 void Splitter::initialize()
 {
@@ -63,8 +54,7 @@ void Splitter::initialize()
     tailVlcDelaySignal = registerSignal("tailVlcDelay");
 
     // Other simulation modules
-    cModule* tmpMobility = getParentModule()->getSubmodule("veinsmobility");
-    mobility = dynamic_cast<TraCIMobility*>(tmpMobility);
+    mobility = FindModule<TraCIMobility*>::findSubModule(getParentModule());
     ASSERT(mobility);
 
     vlcPhys = getSubmodulesOfType<PhyLayerVlc>(getParentModule(), true);
@@ -99,30 +89,16 @@ void Splitter::handleMessage(cMessage* msg)
 
 void Splitter::handleUpperMessage(cMessage* msg)
 {
-    // Cast the message to a subclass
-    VlcMessage* vlcMsg = dynamic_cast<VlcMessage*>(msg);
+    unique_ptr<BaseFrame1609_4> wsm(check_and_cast<BaseFrame1609_4*>(msg));
+    const auto accessTechnology = getAccessTechnology(wsm.get());
 
-    // Handle WSMs if the VLC has to be "retrofitted" to non-VLC app
-    if (!vlcMsg) {
-        BaseFrame1609_4* wsm = dynamic_cast<BaseFrame1609_4*>(msg);
-
-        // If not a VlcMessage check whether it is a WSM to send directly
-        if (wsm) {
-            send(wsm, toDsrcNic);
-            return;
-        }
-        else
-            error("Not a VlcMessage, not BaseFrame1609_4");
-    }
-
-    // if (vlcMsg)...
-    int networkType = vlcMsg->getAccessTechnology();
-    if (networkType == DSRC) {
+    if (accessTechnology.test(Splitter::Interface::dsrc)) {
         EV_INFO << "DSRC message received from upper layer!" << std::endl;
-        send(vlcMsg, toDsrcNic);
+        send(wsm->dup(), toDsrcNic);
     }
-    else if (networkType == VLC) {
-        EV_INFO << "VLC message received from upper layer!" << std::endl;
+    if (accessTechnology.test(Splitter::Interface::vlc_head)) {
+        EV_INFO << "VLC head message received from upper layer!" << std::endl;
+
         if (draw) {
             // Won't draw at simTime() < 0.1 as TraCI is not connected and annotation fails
             auto drawCones = [this]() {
@@ -130,6 +106,18 @@ void Splitter::handleUpperMessage(cMessage* msg)
                 drawRayLine(vlcPhys[0]->getAntennaPosition(), 100, headHalfAngle);
                 // left
                 drawRayLine(vlcPhys[0]->getAntennaPosition(), 100, -headHalfAngle);
+            };
+            // The cones will be drawn immediately as a message is received from the layer above
+            timerManager.create(veins::TimerSpecification(drawCones).oneshotAt(simTime()));
+        }
+        headlightPacketsSent += 1;
+        vlcPacketsSent += 1;
+        send(wsm->dup(), toVlcHead);
+    }
+    if (accessTechnology.test(Splitter::Interface::vlc_tail)) {
+        EV_INFO << "VLC tail message received from upper layer!" << std::endl;
+        if (draw) {
+            auto drawCones = [this]() {
                 // Taillight, left
                 drawRayLine(vlcPhys[1]->getAntennaPosition(), 30, tailHalfAngle, true);
                 // right
@@ -139,75 +127,48 @@ void Splitter::handleUpperMessage(cMessage* msg)
             timerManager.create(veins::TimerSpecification(drawCones).oneshotAt(simTime()));
         }
 
-        int lightModule = vlcMsg->getTransmissionModule();
-
-        switch (lightModule) {
-        case HEADLIGHT:
-            headlightPacketsSent++;
-            send(vlcMsg, toVlcHead);
-            break;
-        case TAILLIGHT:
-            taillightPacketsSent++;
-            send(vlcMsg, toVlcTail);
-            break;
-        case DONT_CARE:
-            error("behavior not specified for DONT_CARE");
-            break;
-        case BOTH_LIGHTS: {
-            vlcPacketsSent++;
-            VlcMessage* toHead = vlcMsg->dup();
-            toHead->setTransmissionModule(HEADLIGHT);
-            send(toHead, toVlcHead);
-
-            VlcMessage* toTail = vlcMsg->dup();
-            toTail->setTransmissionModule(TAILLIGHT);
-            send(toTail, toVlcTail);
-            delete vlcMsg;
-            vlcMsg = NULL;
-            break;
-        }
-        default:
-            error("\tThe light module has not been specified in the message!");
-            break;
-        }
-    }
-    else {
-        error("\tThe access technology has not been specified in the message!");
+        taillightPacketsSent += 1;
+        vlcPacketsSent += 1;
+        send(wsm->dup(), toVlcTail);
     }
 }
 
 void Splitter::handleLowerMessage(cMessage* msg)
 {
-    int lowerGate = msg->getArrivalGateId();
-
-    // !(lowerGate == fromDsrcNic) --> (lowerGate  == fromVlcHead || fromVlcTail)
-    // If the message is from any of the VLC modules and we need to collect statistics
-    if (!(lowerGate == fromDsrcNic) && collectStatistics) {
-        vlcPacketsReceived++;
-        VlcMessage* vlcMsg = dynamic_cast<VlcMessage*>(msg);
-
-        emit(totalVlcDelaySignal, simTime() - vlcMsg->getCreationTime());
-
-        int srclightModule = vlcMsg->getTransmissionModule();
-        if (srclightModule == HEADLIGHT) {
-            headlightPacketsReceived++;
-            emit(headVlcDelaySignal, simTime() - vlcMsg->getCreationTime());
+    if (msg->getArrivalGateId() == fromDsrcNic) {
+        headlightPacketsReceived++;
+        if (VlcMessage* vlcMsg = dynamic_cast<VlcMessage*>(msg)) {
+            vlcMsg->setAccessTechnology(Splitter::Interfaces(Splitter::Interface::dsrc).to_ulong());
         }
-        else if (srclightModule == TAILLIGHT) {
-            taillightPacketsReceived++;
-            emit(tailVlcDelaySignal, simTime() - vlcMsg->getCreationTime());
+    } else if (msg->getArrivalGateId() == fromVlcHead) {
+        headlightPacketsReceived += 1;
+        vlcPacketsReceived += 1;
+        emit(headVlcDelaySignal, simTime() - msg->getCreationTime());
+        emit(totalVlcDelaySignal, simTime() - msg->getCreationTime());
+        if (VlcMessage* vlcMsg = dynamic_cast<VlcMessage*>(msg)) {
+            vlcMsg->setAccessTechnology(Splitter::Interfaces(Splitter::Interface::vlc_head).to_ulong());
         }
-        else
-            error("neither `head` nor `tail`");
-
-    }
-
-    if (VlcMessage* vlcMsg = dynamic_cast<VlcMessage*>(msg)) {
-        if (lowerGate == fromVlcHead) vlcMsg->setTransmissionModule(HEADLIGHT);
-        if (lowerGate == fromVlcTail) vlcMsg->setTransmissionModule(TAILLIGHT);
+    } else if (msg->getArrivalGateId() == fromVlcTail) {
+        taillightPacketsReceived += 1;
+        vlcPacketsReceived += 1;
+        emit(tailVlcDelaySignal, simTime() - msg->getCreationTime());
+        emit(totalVlcDelaySignal, simTime() - msg->getCreationTime());
+        if (VlcMessage* vlcMsg = dynamic_cast<VlcMessage*>(msg)) {
+            vlcMsg->setAccessTechnology(Splitter::Interfaces(Splitter::Interface::vlc_tail).to_ulong());
+        }
     }
 
     send(msg, toApplication);
+}
+
+Splitter::Interfaces Splitter::getAccessTechnology(cPacket *msg) {
+    if (VlcMessage* vlcMsg = dynamic_cast<VlcMessage*>(msg)) {
+        return Interfaces(vlcMsg->getAccessTechnology());
+    }
+    else {
+        return Interface::dsrc;  // fallback for non-vlc-messages
+    }
+
 }
 
 void Splitter::drawRayLine(const AntennaPosition& ap, int length, double halfAngle, bool reverse)
