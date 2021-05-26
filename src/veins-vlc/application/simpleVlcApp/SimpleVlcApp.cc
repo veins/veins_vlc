@@ -116,6 +116,7 @@ VlcMessage* SimpleVlcApp::generateVlcMessage(int accessTechnology, int sendingMo
     vlcMsg->setDestinationNode("BROADCAST");
     vlcMsg->setAccessTechnology(accessTechnology);
     vlcMsg->setTransmissionModule(sendingModule);
+    vlcMsg->setTimestamp();
 
     // Set application layer packet length
     vlcMsg->setByteLength(byteLength);
