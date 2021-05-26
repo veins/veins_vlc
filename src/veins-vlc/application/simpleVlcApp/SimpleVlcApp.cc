@@ -111,9 +111,7 @@ VlcMessage* SimpleVlcApp::generateVlcMessage(int accessTechnology, int sendingMo
     // OMNeT-specific
     vlcMsg->setName("vlcMessage");
 
-    // WSM fields
-
-    // HeterogeneousMessage specific
+    // VlcMesage fields
     vlcMsg->setSourceNode(this->sumoId.c_str());
     vlcMsg->setDestinationNode("BROADCAST");
     vlcMsg->setAccessTechnology(accessTechnology);
