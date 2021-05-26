@@ -182,7 +182,7 @@ void Splitter::handleLowerMessage(cMessage* msg)
 
     // !(lowerGate == fromDsrcNic) --> (lowerGate  == fromVlcHead || fromVlcTail)
     // If the message is from any of the VLC modules and we need to collect statistics
-    if (!(lowerGate == fromDsrcNic) && collectStatistics) {
+    if ((lowerGate == fromVlcHead) || (lowerGate == fromVlcTail)) {
         vlcPacketsReceived++;
         VlcMessage* vlcMsg = dynamic_cast<VlcMessage*>(msg);
 
